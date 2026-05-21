@@ -37,8 +37,7 @@ class WaybackMachineModule(BazookaModule):
             if not data or len(data) < 2:
                 return result
 
-            # First row is headers, rest is data
-            headers = data[0]
+            # First row is column headers, rest is data
             rows = data[1:]
 
         except Exception:

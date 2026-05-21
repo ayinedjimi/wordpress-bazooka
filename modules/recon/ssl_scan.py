@@ -26,7 +26,6 @@ def _get_certificate_info(hostname: str, port: int = 443, timeout: float = 10.0)
     with socket.create_connection((hostname, port), timeout=timeout) as sock:
         with context.wrap_socket(sock, server_hostname=hostname) as ssock:
             cert = ssock.getpeercert(binary_form=False)
-            cert_bin = ssock.getpeercert(binary_form=True)
             info["protocol_version"] = ssock.version()
             info["cipher"] = ssock.cipher()
 
@@ -129,7 +128,7 @@ def _check_legacy_tls(hostname: str, port: int = 443, timeout: float = 5.0) -> d
         ctx_11.maximum_version = ssl.TLSVersion.TLSv1_1
         ctx_11.minimum_version = ssl.TLSVersion.TLSv1_1
         with socket.create_connection((hostname, port), timeout=timeout) as sock:
-            with ctx_11.wrap_socket(sock, server_hostname=hostname) as ssock:
+            with ctx_11.wrap_socket(sock, server_hostname=hostname):
                 results["tls_1_1"] = True
     except (ssl.SSLError, OSError, AttributeError):
         results["tls_1_1"] = False

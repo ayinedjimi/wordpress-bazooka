@@ -33,12 +33,7 @@ def _extract_cert_info(ip: str, port: int = 443, timeout: float = _CONNECT_TIMEO
             cert_bin = ssock.getpeercert(binary_form=True)
             if not cert_bin:
                 return None
-            # Decode using the ssl module's DER parser
-            cert = ssl.DER_cert_to_PEM_cert(cert_bin)
-
-            # Re-wrap with hostname check off to get parsed dict
-            # Alternative: parse the PEM manually; use a second connection that returns getpeercert()
-            # We do a reconnection to get the parsed cert dict
+            # We do a reconnection below to get the parsed cert dict via getpeercert(False)
         finally:
             ssock.close()
     except Exception:

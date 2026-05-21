@@ -46,7 +46,6 @@ class GoogleDorkingModule(BazookaModule):
         # Instead, we generate the dork URLs and check if files are directly accessible
         # This is more reliable and doesn't violate Google TOS
 
-        dork_urls: list[dict] = []
         direct_checks: list[tuple[str, str, Severity]] = [
             (f"{ctx.target.url}/wp-config.php.bak", "wp-config backup", Severity.CRITICAL),
             (f"{ctx.target.url}/dump.sql", "SQL dump", Severity.CRITICAL),

@@ -121,7 +121,6 @@ class OriginFinderModule(BazookaModule):
 
         async def verify_origin(candidate: dict) -> None:
             ip = candidate["ip"]
-            hostname = candidate["hostname"]
             for scheme in ("https", "http"):
                 try:
                     url = f"{scheme}://{ip}"

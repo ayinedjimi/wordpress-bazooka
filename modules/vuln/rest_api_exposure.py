@@ -41,7 +41,6 @@ class RestAPIExposureModule(BazookaModule):
                     has_emails = any("email" in u for u in data if isinstance(u, dict))
                 if has_emails:
                     user_count = len(data) if isinstance(data, list) else 0
-                    emails = [u.get("email", "") for u in data[:5] if isinstance(u, dict)]
                     result.add_finding(Finding(
                         id="VULN-REST-001",
                         title=f"REST API exposes full user data with emails on {ctx.target.domain}",

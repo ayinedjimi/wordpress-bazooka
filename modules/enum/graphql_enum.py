@@ -87,7 +87,6 @@ class GraphQLEnumModule(BazookaModule):
 
         for t in types_list:
             type_name = t.get("name", "")
-            type_kind = t.get("kind", "")
             fields = t.get("fields") or []
             total_fields += len(fields)
 
