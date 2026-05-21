@@ -224,6 +224,13 @@ def update_db(
                       f"{c['core']} WP core, {len(bundle['infra'])} infra kinds, "
                       f"{c['kev']} KEV WordPress, {c['osv']} OSV cross-refs")
         console.print(f"  Cache: {prewarm.CACHE_PATH} ({size/1024:.1f} KB)")
+        # Invalidate the in-process prewarm cache so a long-running CLI
+        # (e.g. inside the GUI subprocess) picks up the new data immediately.
+        try:
+            from cve_db.wordfence_fetcher import reload_prewarm
+            reload_prewarm()
+        except Exception:
+            pass
 
     asyncio.run(_go())
 

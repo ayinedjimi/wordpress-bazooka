@@ -40,19 +40,36 @@ CACHE_TTL = 24 * 3600
 # via `python -m cve_db.prewarm` or refreshed at runtime by `bazooka update-db`).
 _PREWARM: Optional[dict] = None
 _PREWARM_LOADED = False
+# threading.Lock (not asyncio) because _load_prewarm is sync and may be called
+# from worker threads via asyncio.to_thread; the boolean guard alone is racy.
+import threading as _threading
+_PREWARM_LOCK = _threading.Lock()
 
 
 def _load_prewarm() -> dict:
     global _PREWARM, _PREWARM_LOADED
+    # Double-checked locking: fast path without acquiring the lock when loaded.
     if _PREWARM_LOADED:
         return _PREWARM or {}
-    _PREWARM_LOADED = True
-    if PREWARM_PATH.exists():
-        try:
-            _PREWARM = json.loads(PREWARM_PATH.read_text(encoding="utf-8"))
-        except Exception:
-            _PREWARM = None
+    with _PREWARM_LOCK:
+        if _PREWARM_LOADED:
+            return _PREWARM or {}
+        if PREWARM_PATH.exists():
+            try:
+                _PREWARM = json.loads(PREWARM_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                _PREWARM = None
+        _PREWARM_LOADED = True
     return _PREWARM or {}
+
+
+def reload_prewarm() -> dict:
+    """Force-reload prewarm_cache.json from disk (called after `update-db`)."""
+    global _PREWARM, _PREWARM_LOADED
+    with _PREWARM_LOCK:
+        _PREWARM_LOADED = False
+        _PREWARM = None
+    return _load_prewarm()
 
 
 def _kev_lookup(cve_id: str) -> bool:

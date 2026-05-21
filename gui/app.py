@@ -116,6 +116,11 @@ async def start_scan(request: Request):
         "phase": "starting",
         "findings_count": 0,
         "logs": [],
+        # Absolute count of lines that were ever dropped from the head of `logs`
+        # (because of the live-log truncation in _run_scan). The WS handler uses
+        # this to translate its absolute `last_log_idx` into a valid slice index
+        # — without it, truncation makes new_logs always return [] until restart.
+        "logs_offset": 0,
         "started": datetime.utcnow().isoformat(),
         "ctx": None,
     }
@@ -141,7 +146,11 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
     def L(msg: str):
         log.append(f"[{_ts()}] {msg}")
         if len(log) > MAX_LOG_LINES:
-            del log[: len(log) - MAX_LOG_LINES]
+            drop = len(log) - MAX_LOG_LINES
+            del log[:drop]
+            # Bump the offset so the WS handler still computes a correct slice
+            # after truncation; otherwise live streaming silently dies.
+            scan["logs_offset"] += drop
 
     try:
         # Banner
@@ -408,12 +417,18 @@ async def scan_ws(websocket: WebSocket, scan_id: str):
         await websocket.close()
         return
 
-    last_log_idx = 0
+    # `total_seen` is the absolute count of log lines this WS has streamed
+    # so far (across the whole scan life, including any that have been dropped
+    # from `logs` by the live-log cap). We translate it to a local slice index
+    # by subtracting the current `logs_offset`. This way the WS keeps streaming
+    # even after the log buffer rolls over.
+    total_seen = 0
     try:
         while True:
-            # Send updates
-            new_logs = scan["logs"][last_log_idx:]
-            last_log_idx = len(scan["logs"])
+            offset = scan.get("logs_offset", 0)
+            local_idx = max(0, total_seen - offset)
+            new_logs = scan["logs"][local_idx:]
+            total_seen = offset + len(scan["logs"])
 
             # Surface ctx.current_actions (e.g. CVE API calls in progress)
             engine_ref = scan.get("_engine")
@@ -439,7 +454,7 @@ async def scan_ws(websocket: WebSocket, scan_id: str):
                     "phase": scan["phase"],
                     "progress": 100,
                     "findings_count": scan["findings_count"],
-                    "new_logs": scan["logs"][last_log_idx:],
+                    "new_logs": scan["logs"][max(0, total_seen - scan.get("logs_offset", 0)):],
                     "done": True,
                     "severity_counts": summary.get("severity_counts", {}),
                     "max_cvss": summary.get("max_cvss", 0),

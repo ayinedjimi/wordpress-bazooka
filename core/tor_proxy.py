@@ -49,7 +49,12 @@ def find_geoip_dir() -> Optional[Path]:
 
 
 def _free_port(preferred: int = 9150) -> int:
-    """Return a free port (try preferred first)."""
+    """Return a free port (try preferred first).
+
+    Note: there is an inherent TOCTOU window between this probe and Tor's
+    bind. The caller MUST handle Tor failing to bind and retry by calling
+    this again — see TorProcess.start() for the retry loop.
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         s.bind(("127.0.0.1", preferred))

@@ -9,9 +9,14 @@ from cve_db.manager import CVEDatabase
 
 
 def _get_temp_db():
-    """Create a temporary CVE database for testing."""
-    tmp = tempfile.mktemp(suffix=".db")
-    db = CVEDatabase(db_path=Path(tmp))
+    """Create a temporary CVE database for testing.
+
+    tempfile.mktemp() is deprecated (TOCTOU). We use NamedTemporaryFile in
+    delete-on-close=False mode, then close it so SQLite can open the path.
+    """
+    fh = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    fh.close()
+    db = CVEDatabase(db_path=Path(fh.name))
     db.initialize()
     return db
 
