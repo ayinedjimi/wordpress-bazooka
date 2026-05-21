@@ -14,6 +14,15 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+# Force UTF-8 stdout/stderr on Windows so em-dashes, accents and box-drawing
+# characters render correctly in cmd.exe (default CP-1252 mangles them).
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
+        sys.stderr.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
+    except Exception:
+        pass
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -40,7 +49,7 @@ BANNER = r"""
    \ V  V / | |_) | |_| |/ ___ \ / /_| |_| | |_| | . \ / ___ \
     \_/\_/  |____/ \____/_/   \_/____|\___ / \___/|_|\_/_/   \_\
 [/bold magenta]
- [dim]WordPress Penetration Testing Framework — v0.1.0[/dim]
+ [dim]WordPress Penetration Testing Framework - v0.1.0[/dim]
 """
 
 
