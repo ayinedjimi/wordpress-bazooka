@@ -64,6 +64,17 @@ _prewarm = ROOT / "cve_db" / "prewarm_cache.json"
 if _prewarm.exists():
     datas.append((str(_prewarm), "cve_db"))
 
+# Bundle Tor (Windows-only) so users can scan over Tor with --tor without
+# installing anything. Adds ~19 MB to the exe.
+_tor_root = ROOT / "vendor" / "tor"
+if _tor_root.exists():
+    if (_tor_root / "tor" / "tor.exe").exists():
+        datas.append((str(_tor_root / "tor" / "tor.exe"), "vendor/tor/tor"))
+    for fn in ("geoip", "torrc-defaults"):
+        p = _tor_root / "data" / fn
+        if p.exists():
+            datas.append((str(p), "vendor/tor/data"))
+
 # Static dir is optional
 if (ROOT / "gui" / "static").exists():
     datas.append(("gui/static", "gui/static"))

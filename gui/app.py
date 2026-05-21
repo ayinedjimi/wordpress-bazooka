@@ -96,6 +96,7 @@ async def start_scan(request: Request):
     profile = str(form.get("profile", "standard"))
     rate_limit = float(form.get("rate_limit", 10))
     threads = int(form.get("threads", 10))
+    use_tor = bool(form.get("use_tor"))
 
     if not url:
         return RedirectResponse("/", status_code=303)
@@ -119,12 +120,13 @@ async def start_scan(request: Request):
     }
 
     # Launch scan in background
-    asyncio.create_task(_run_scan(scan_id, url, profile, rate_limit, threads))
+    asyncio.create_task(_run_scan(scan_id, url, profile, rate_limit, threads, use_tor))
 
     return RedirectResponse(f"/scan/{scan_id}", status_code=303)
 
 
-async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float, threads: int):
+async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
+                    threads: int, use_tor: bool = False):
     """Background scan task — mirrors console output to live log."""
     scan = scans[scan_id]
     log = scan["logs"]
@@ -141,11 +143,30 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float, thr
 
         scan["phase"] = "initializing"
 
+        # Optional: route through embedded Tor (for IP-banned targets)
+        tor_proc = None
+        proxy_url: Optional[str] = None
+        if use_tor:
+            L("[TOR] Demarrage de Tor embarque (SOCKS5 local)...")
+            scan["phase"] = "tor-bootstrap"
+            try:
+                from core.tor_proxy import TorProcess
+                tor_proc = TorProcess()
+                # Run blocking start() in a thread so the event loop stays free.
+                await asyncio.to_thread(tor_proc.start, 90)
+                proxy_url = tor_proc.proxy_url
+                L(f"[TOR] OK — proxy {proxy_url} (control: {tor_proc.control_port})")
+                scan["_tor"] = tor_proc
+            except Exception as e:
+                L(f"[TOR] Echec demarrage Tor: {e}")
+                tor_proc = None
+
         engine = ScanEngine(
             url=url,
             profile=profile,
             rate_limit=rate_limit,
             threads=threads,
+            proxy=proxy_url,
         )
         engine.discover_modules()
         # Allow the WebSocket loop to pull live sub-actions from the running engine.
@@ -344,6 +365,14 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float, thr
         L(f"ERROR: {e}")
         import traceback
         L(traceback.format_exc())
+    finally:
+        tor_ref = scan.get("_tor")
+        if tor_ref is not None:
+            try:
+                tor_ref.stop()
+                scan.pop("_tor", None)
+            except Exception:
+                pass
 
 
 def _ts() -> str:
