@@ -148,6 +148,8 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float, thr
             threads=threads,
         )
         engine.discover_modules()
+        # Allow the WebSocket loop to pull live sub-actions from the running engine.
+        scan["_engine"] = engine
 
         # Count modules per phase
         active_phases = []
@@ -211,6 +213,11 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float, thr
             mods_sorted = sorted(mods, key=lambda m: len(m.dependencies))
             sem = asyncio.Semaphore(engine.threads)
 
+            # Per-module safety timeout (seconds). Heavy modules (cve_matcher
+            # with N API calls, source_maps, wordlist) need more headroom.
+            MODULE_TIMEOUT = 180
+            HEAVY_TIMEOUT = 300
+
             async def _run_one(mod):
                 async with sem:
                     if not mod.should_run(engine.ctx):
@@ -219,8 +226,14 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float, thr
                         return
                     L(f"  > {mod.name}...")
                     t0 = asyncio.get_event_loop().time()
+                    timeout = HEAVY_TIMEOUT if mod.name in (
+                        "vuln.cve_matcher", "enum.wp_plugins",
+                        "enum.source_maps", "recon.ct_logs", "recon.wayback_machine",
+                    ) else MODULE_TIMEOUT
                     try:
-                        result = await mod.run(engine.ctx, engine.session)
+                        result = await asyncio.wait_for(
+                            mod.run(engine.ctx, engine.session), timeout=timeout
+                        )
                         dt = asyncio.get_event_loop().time() - t0
                         engine.target.meta.modules_executed += 1
                         if result.findings:
@@ -228,6 +241,12 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float, thr
                         for k, v in result.data.items():
                             engine.ctx.set_data(k, v)
                         L(f"  < {mod.name} ok ({len(result.findings)} findings, {dt:.1f}s)")
+                    except asyncio.TimeoutError:
+                        dt = asyncio.get_event_loop().time() - t0
+                        engine.target.meta.modules_failed += 1
+                        engine.ctx.set_current_action(mod.name, "")
+                        L(f"  ! {mod.name} TIMEOUT after {dt:.1f}s (cap: {timeout}s)")
+                        return
                     except Exception as e:
                         dt = asyncio.get_event_loop().time() - t0
                         engine.target.meta.modules_failed += 1
@@ -238,6 +257,7 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float, thr
             new_findings = engine.ctx.findings[findings_before:]
 
             scan["findings_count"] = findings_after
+            scan["sub_actions"] = engine.ctx.get_current_actions()
 
             # Log each finding from this phase (sorted by CVSS)
             for f in sorted(new_findings, key=lambda x: x.cvss_score, reverse=True):
@@ -355,12 +375,20 @@ async def scan_ws(websocket: WebSocket, scan_id: str):
             new_logs = scan["logs"][last_log_idx:]
             last_log_idx = len(scan["logs"])
 
+            # Surface ctx.current_actions (e.g. CVE API calls in progress)
+            engine_ref = scan.get("_engine")
+            if engine_ref is not None and engine_ref.ctx is not None:
+                sub_actions = engine_ref.ctx.get_current_actions()
+            else:
+                sub_actions = scan.get("sub_actions") or {}
+
             await websocket.send_json({
                 "status": scan["status"],
                 "phase": scan["phase"],
                 "progress": scan["progress"],
                 "findings_count": scan["findings_count"],
                 "new_logs": new_logs,
+                "sub_actions": sub_actions,
             })
 
             if scan["status"] in ("complete", "error"):

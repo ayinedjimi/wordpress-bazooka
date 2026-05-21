@@ -170,11 +170,32 @@ def doctor() -> None:
 
 
 @app.command(name="update-db")
-def update_db() -> None:
-    """Update the CVE database from online sources."""
+def update_db(
+    plugin_limit: int = typer.Option(250, help="Top N plugins to pre-warm"),
+    include_kev: bool = typer.Option(True, help="Include CISA KEV catalog"),
+    include_osv: bool = typer.Option(False, help="Cross-fetch OSV.dev (slow)"),
+) -> None:
+    """Refresh the embedded CVE bundle from wpvulnerability.net + CISA KEV (+ OSV)."""
     console.print(BANNER)
-    console.print(" [bold]Updating CVE database...[/bold]")
-    console.print("  [yellow]Not yet implemented in v0.1 - using embedded signatures.[/yellow]")
+    console.print(" [bold]Updating CVE database (multi-source)...[/bold]")
+    from cve_db import prewarm
+
+    async def _go():
+        bundle = await prewarm.prewarm(
+            plugin_limit=plugin_limit,
+            include_kev=include_kev,
+            include_osv=include_osv,
+            verbose=True,
+        )
+        size = prewarm.save_bundle(bundle)
+        c = bundle["_meta"]["counts"]
+        console.print()
+        console.print(f"  [green]OK[/green] {c['plugins']} plugins, {c['themes']} themes, "
+                      f"{c['core']} WP core, {len(bundle['infra'])} infra kinds, "
+                      f"{c['kev']} KEV WordPress, {c['osv']} OSV cross-refs")
+        console.print(f"  Cache: {prewarm.CACHE_PATH} ({size/1024:.1f} KB)")
+
+    asyncio.run(_go())
 
 
 @app.command()

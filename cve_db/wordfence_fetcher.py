@@ -33,7 +33,35 @@ WPV_INFRA_URLS = {
 }
 WPV_CORE_URL = "https://www.wpvulnerability.net/core/{ver}/"
 CACHE_PATH = Path(__file__).parent / "wpvuln_cache.json"
+PREWARM_PATH = Path(__file__).parent / "prewarm_cache.json"
 CACHE_TTL = 24 * 3600
+
+# Pre-warmed multi-source cache bundled inside the exe (filled at build time
+# via `python -m cve_db.prewarm` or refreshed at runtime by `bazooka update-db`).
+_PREWARM: Optional[dict] = None
+_PREWARM_LOADED = False
+
+
+def _load_prewarm() -> dict:
+    global _PREWARM, _PREWARM_LOADED
+    if _PREWARM_LOADED:
+        return _PREWARM or {}
+    _PREWARM_LOADED = True
+    if PREWARM_PATH.exists():
+        try:
+            _PREWARM = json.loads(PREWARM_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            _PREWARM = None
+    return _PREWARM or {}
+
+
+def _kev_lookup(cve_id: str) -> bool:
+    """Return True if the CVE is in CISA KEV (actively exploited)."""
+    pw = _load_prewarm()
+    for entry in pw.get("kev") or []:
+        if entry.get("cve_id") == cve_id:
+            return True
+    return False
 
 _MEM_CACHE: dict[str, dict] = {}
 _CACHE_LOADED = False
@@ -166,6 +194,7 @@ def _normalize(vuln: dict, slug: str) -> dict:
         "references": refs[:5],
         "vuln_type": vuln.get("vulnerability_type") or "",
         "description": desc or title,
+        "kev": _kev_lookup(cve_id) if cve_id.startswith("CVE-") else False,
     }
 
 
@@ -222,16 +251,59 @@ def match_plugin_cves(slug: str, version: Optional[str]) -> list[dict]:
 
 
 async def match_plugin_cves_async(slug: str, version: Optional[str]) -> list[dict]:
-    """Async-friendly version: safe to call from within an asyncio loop."""
+    """Async-friendly: use embedded prewarm cache first, fall back to live API."""
     _load_cache()
     if not slug:
         return []
     slug_l = slug.lower()
+
+    # 1) Embedded prewarm bundle (shipped in the exe) — instant, offline
+    pw = _load_prewarm()
+    pw_vulns = (pw.get("plugins") or {}).get(slug_l)
+    if pw_vulns is not None:
+        out: list[dict] = []
+        for v in pw_vulns:
+            if _check_operator(version, v.get("operator") or {}):
+                out.append(_normalize(v, slug_l))
+        return out
+
+    # 2) Per-session disk cache (refreshed every 24h)
     entry = _MEM_CACHE.get(slug_l)
     if entry is None or (time.time() - entry.get("_ts", 0) > CACHE_TTL):
         vulns = await _fetch_one(slug_l)
         entry = {"_ts": time.time(), "vulns": vulns}
         _MEM_CACHE[slug_l] = entry
+        _save_cache()
+    vulns = entry.get("vulns") or []
+    out: list[dict] = []
+    for v in vulns:
+        if _check_operator(version, v.get("operator") or {}):
+            out.append(_normalize(v, slug_l))
+    return out
+
+
+async def match_theme_cves_async(slug: str, version: Optional[str]) -> list[dict]:
+    """Lookup theme CVE (prewarm first, then live API)."""
+    _load_cache()
+    if not slug:
+        return []
+    slug_l = slug.lower()
+
+    pw = _load_prewarm()
+    pw_vulns = (pw.get("themes") or {}).get(slug_l)
+    if pw_vulns is not None:
+        out: list[dict] = []
+        for v in pw_vulns:
+            if _check_operator(version, v.get("operator") or {}):
+                out.append(_normalize(v, slug_l))
+        return out
+
+    cache_key = f"__theme__{slug_l}"
+    entry = _MEM_CACHE.get(cache_key)
+    if entry is None or (time.time() - entry.get("_ts", 0) > CACHE_TTL):
+        vulns = await _fetch_one(slug_l, is_theme=True)
+        entry = {"_ts": time.time(), "vulns": vulns}
+        _MEM_CACHE[cache_key] = entry
         _save_cache()
     vulns = entry.get("vulns") or []
     out: list[dict] = []
@@ -268,6 +340,17 @@ async def match_infra_cves_async(kind: str, version: Optional[str]) -> list[dict
     _load_cache()
     if not version or not kind:
         return []
+
+    pw = _load_prewarm()
+    pw_vulns = ((pw.get("infra") or {}).get(kind) or {}).get(version)
+    if pw_vulns is not None:
+        out: list[dict] = []
+        for v in pw_vulns:
+            op = v.get("operator") or {}
+            if not op or _check_operator(version, op):
+                out.append(_normalize(v, f"{kind}:{version}"))
+        return out
+
     cache_key = f"__infra_{kind}__{version}"
     entry = _MEM_CACHE.get(cache_key)
     if entry is None or (time.time() - entry.get("_ts", 0) > CACHE_TTL):
@@ -278,8 +361,6 @@ async def match_infra_cves_async(kind: str, version: Optional[str]) -> list[dict
     vulns = entry.get("vulns") or []
     out: list[dict] = []
     for v in vulns:
-        # For infra endpoints the input version itself is the queried version,
-        # so the API already returns only relevant vulns. We still filter by operator.
         op = v.get("operator") or {}
         if not op or _check_operator(version, op):
             out.append(_normalize(v, f"{kind}:{version}"))
@@ -291,6 +372,14 @@ async def match_core_cves_async(version: Optional[str]) -> list[dict]:
     _load_cache()
     if not version:
         return []
+
+    pw = _load_prewarm()
+    # Try exact then major.minor (e.g. "5.3" for "5.3.2")
+    short = ".".join(version.split(".")[:2])
+    pw_vulns = (pw.get("core") or {}).get(version) or (pw.get("core") or {}).get(short)
+    if pw_vulns is not None:
+        return [_normalize(v, f"wp-core:{version}") for v in pw_vulns]
+
     cache_key = f"__core__{version}"
     entry = _MEM_CACHE.get(cache_key)
     if entry is None or (time.time() - entry.get("_ts", 0) > CACHE_TTL):

@@ -111,10 +111,13 @@ class CVEMatcherModule(BazookaModule):
                 ))
 
             # === wpvulnerability.net matches (live, per plugin) ===
+            ctx.set_current_action(self.name,
+                                   f"Je verifie les CVE de {plugin.slug}...")
             try:
                 wf_cves = await match_plugin_cves_async(plugin.slug, plugin.version)
             except Exception:
                 wf_cves = []
+            ctx.set_current_action(self.name, "")
             # Prefer entries that have a real CVE-XXXX id; dedupe by title to merge duplicates
             seen_titles: set[str] = set()
             for wf in wf_cves:

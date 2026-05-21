@@ -42,6 +42,19 @@ class ScanContext:
         self.profile: str = "standard"
         self.pentest: bool = False
         self.infra: bool = False
+        # Per-module live sub-action shown in the GUI activity bar
+        # (e.g. "Fetching CVE for litespeed-cache")
+        self._actions: dict[str, str] = {}
+
+    def set_current_action(self, module: str, action: str) -> None:
+        """Modules can call this to surface what they are doing right now."""
+        if action:
+            self._actions[module] = action
+        else:
+            self._actions.pop(module, None)
+
+    def get_current_actions(self) -> dict[str, str]:
+        return dict(self._actions)
 
     def add_finding(self, finding: Finding) -> None:
         self.findings.append(finding)

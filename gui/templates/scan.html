@@ -449,16 +449,117 @@ function stopSpinner() {
     activitySpin.textContent = '*';
     activityAscii.textContent = '\\(^o^)/';
 }
+// Phrases françaises par module — la mascotte raconte ce qu'elle fait
+const MASCOT_SAYS = {
+    'recon.dns_enum':           'Je sonde le DNS, SPF et DMARC...',
+    'recon.ct_logs':            'Je fouille les Certificate Transparency logs...',
+    'recon.headers_analysis':   'Je lis les en-tetes HTTP du serveur...',
+    'recon.ssl_scan':           'Je teste le certificat TLS...',
+    'recon.subdomain_enum':     'Je cherche des sous-domaines...',
+    'recon.technology_stack':   'Je devine la stack technique (Apache, PHP, ...)',
+    'recon.waf_detect':         'Je provoque le WAF pour voir s\'il mord...',
+    'recon.whois_lookup':       'Je consulte le WHOIS du domaine...',
+    'recon.wayback_machine':    'Je remonte le temps avec Wayback Machine...',
+    'recon.google_dorking':     'Je tape des Google dorks sur la cible...',
+    'recon.robots_parser':      'Je lis robots.txt et sitemap.xml...',
+    'recon.email_breach_deep':  'Je verifie HIBP pour les emails fuites...',
+    'recon.social_media_osint': 'Je scrute les reseaux sociaux...',
+    'enum.wp_version':          'Je determine la version exacte de WordPress...',
+    'enum.wp_plugins':          'J\'enumere les plugins installes (passive + brute)...',
+    'enum.wp_themes':           'J\'enumere les themes...',
+    'enum.wp_users':            'Je cherche les utilisateurs (4 vecteurs en parallele)...',
+    'enum.xmlrpc_methods':      'Je tape a la porte XML-RPC...',
+    'enum.rest_api':            'Je liste les endpoints REST API...',
+    'enum.graphql_enum':        'Je tente une introspection GraphQL...',
+    'enum.backup_finder':       'Je chasse les fichiers sensibles (.env, .git, dumps)...',
+    'enum.debug_log':           'Je lis debug.log a la recherche de secrets...',
+    'enum.directory_listing':   'Je verifie si des dossiers exposent leur contenu...',
+    'enum.wp_config_audit':     'J\'audite wp-config.php et ses variantes...',
+    'enum.application_passwords': 'Je teste les Application Passwords...',
+    'enum.registration_check':  'Je verifie si l\'inscription est ouverte...',
+    'enum.contact_forms':       'Je cherche les formulaires Contact Form 7...',
+    'enum.email_harvesting':    'Je collecte les emails exposes...',
+    'enum.media_enum':          'Je liste les medias publics...',
+    'enum.object_cache':        'Je tape sur Redis/Memcached...',
+    'enum.cron_jobs':           'Je verifie wp-cron.php...',
+    'enum.source_maps':         'Je cherche des source maps JS oublies...',
+    'enum.shortcode_parser':    'Je parse les shortcodes pour deviner les plugins...',
+    'enum.gravatar_reverse':    'Je remonte les emails depuis les Gravatars...',
+    'enum.wp_multisite':        'Je verifie si c\'est un multisite...',
+    'enum.wp_content_detect':   'Je trouve le chemin de wp-content...',
+    'enum.woocommerce':         'Je sonde WooCommerce...',
+    'vuln.cve_matcher':         'Je croise tous les plugins avec la base CVE...',
+    'vuln.cors_check':          'Je teste les politiques CORS...',
+    'vuln.security_headers':    'Je note les en-tetes de securite manquants...',
+    'vuln.mod_rewrite_cve':     'CVE-2024-38474 : je tente le path confusion Apache...',
+    'vuln.sqli_scanner':        'Je teste les parametres pour SQLi...',
+    'vuln.xss_scanner':         'Je teste les reflexions XSS...',
+    'vuln.ssrf_xmlrpc':         'Je tente un SSRF via pingback...',
+    'vuln.rate_limit':          'Je bombarde wp-login.php (10 tentatives) pour le rate-limit...',
+    'vuln.csrf_check':          'Je cherche les formulaires sans token CSRF...',
+    'vuln.auth_bypass':         'Je verifie les bypass d\'authentification...',
+    'vuln.idor_check':          'Je teste les IDOR sur les endpoints connus...',
+    'vuln.open_ports_exposure': 'Je scanne quelques ports adjacents (DB, cache)...',
+    'vuln.honeypot_detect':     'Je verifie si la cible est un honeypot...',
+    'vuln.host_header_injection': 'Je tente une Host Header Injection...',
+    'vuln.session_auth':        'Je verifie les flags des cookies de session...',
+    'vuln.php_info_exposure':   'Je cherche un phpinfo() oublie...',
+    'vuln.admin_panel_exposure':'Je cherche des panneaux admin tiers (Adminer, phpMyAdmin)...',
+    'vuln.backup_download':     'Je tente le telechargement direct de backups...',
+    'vuln.rest_api_exposure':   'Je teste la creation de compte sans auth...',
+    'vuln.password_policy':     'J\'observe la politique de mot de passe a l\'inscription...',
+    'vuln.misconfig_check':     'Je passe en revue les misconfigurations classiques...',
+    'vuln.directory_traversal': 'Je teste les payloads ../../etc/passwd...',
+    'vuln.lfi_scanner':         'Je teste les LFI sur les parametres...',
+    'vuln.file_upload':         'Je verifie les endpoints d\'upload de fichiers...',
+    'vuln.user_enum_timing':    'Je mesure les delais pour user enum timing-based...',
+    'vuln.plugin_vulns_active': 'Je teste des PoC actifs de CVE plugins...',
+    'exploit.api_key_extraction':'J\'extrais les cles API des fichiers leakes...',
+    'exploit.git_dumper':       'Je dumpe le repository .git/...',
+    'exploit.xmlrpc_bruteforce':'Je brute-force via system.multicall XML-RPC...',
+    'exploit.wp_login_bruteforce':'Je brute-force wp-login.php...',
+    'exploit.pma_bruteforce':   'Je brute-force phpMyAdmin...',
+    'exploit.wordlist_generator':'Je genere une wordlist ciblee sur la cible...',
+    'exploit.origin_bypass':    'Je tente de contourner Cloudflare via origin IP...',
+    'exploit.ssrf_port_scan':   'Je scanne en interne via SSRF...',
+    'exploit.ssrf_internal':    'Je sonde les services internes via SSRF...',
+    'exploit.authenticated_scan':'Je relance avec authentification...',
+    'exploit.password_spray':   'Je tente le password spraying sur les users...',
+    'exploit.woocommerce_idor': 'Je teste les IDOR WooCommerce...',
+    'exploit.cors_exploit_poc': 'Je genere un PoC d\'exploit CORS...',
+    'exploit.wp_cron_dos':      'Je mesure la charge de wp-cron.php...',
+    'infra.network_scan':       'Je scanne le sous-reseau adjacent...',
+    'infra.ssl_cert_enum':      'Je collecte les certificats SSL voisins...',
+    'infra.service_detect':     'Je devine les services derriere les ports...',
+    'infra.vhost_enum':         'Je cherche des virtual hosts caches...',
+    'infra.lateral_movement':   'J\'analyse les opportunites de pivot...',
+};
+
+function mascotPhrase(modName, subAction) {
+    if (subAction) return subAction;  // priorité au sub-status (ex: API call)
+    return MASCOT_SAYS[modName] || modName;
+}
+
+let lastSubActions = {};
+function setSubActions(sub) { lastSubActions = sub || {}; refreshActivity(); }
+
 function refreshActivity() {
     activityPhase.textContent = curPhase || '—';
     activityCounter.textContent = modsDone + '/' + modsTotal;
     if (running.size === 0) {
-        activityCurrent.textContent = modsDone >= modsTotal && modsTotal > 0 ? 'phase terminee' : 'en attente...';
+        activityCurrent.textContent = modsDone >= modsTotal && modsTotal > 0
+            ? 'Phase terminee, je passe a la suivante...'
+            : 'En attente...';
     } else {
         const arr = [...running];
-        activityCurrent.textContent = arr.length === 1
-            ? arr[0]
-            : arr[arr.length - 1] + ' (+' + (arr.length - 1) + ' autres)';
+        // Pick the module with the most informative sub-action, else the latest started.
+        let chosen = arr[arr.length - 1];
+        for (const m of arr) {
+            if (lastSubActions[m]) { chosen = m; break; }
+        }
+        const phrase = mascotPhrase(chosen, lastSubActions[chosen]);
+        const suffix = arr.length > 1 ? ` (+${arr.length - 1} autres)` : '';
+        activityCurrent.textContent = phrase + suffix;
     }
 }
 
@@ -472,6 +573,8 @@ ws.onmessage = function(event) {
 
     phaseLabel.textContent = data.phase;
     findingsCount.textContent = data.findings_count;
+
+    if (data.sub_actions) setSubActions(data.sub_actions);
 
     if (data.new_logs && data.new_logs.length > 0) {
         for (const line of data.new_logs) {
