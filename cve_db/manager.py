@@ -12,7 +12,7 @@ from typing import Optional
 DB_PATH = Path(__file__).parent / "bazooka_cve.db"
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
-# Seed data: well-known WordPress CVEs (curated from CYRIAS pentest + public sources)
+# Seed data: well-known WordPress CVEs (curated from public sources: NVD, WPScan, Wordfence)
 SEED_CVES = [
     # Plugin CVEs — CRITICAL
     ("CVE-2024-6386", "plugin", "sitepress-multilingual-cms", "WPML SSTI RCE via Twig",
