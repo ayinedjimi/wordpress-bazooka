@@ -10,8 +10,14 @@ Bundles:
 
 import os
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_all
 
 ROOT = Path(os.path.abspath(SPECPATH))
+
+# Pull all playwright Python bits (driver, internals) so 'import playwright' works
+# inside the frozen exe. The actual browser binary is NOT bundled (would add ~150MB);
+# users still need to run `playwright install chromium` separately if they want it.
+_pw_datas, _pw_binaries, _pw_hiddenimports = collect_all("playwright")
 
 # Recursively collect every module under modules/ so dynamic discovery works
 hidden_modules: list[str] = []
@@ -39,6 +45,10 @@ hidden_modules += [
     "pydantic.deprecated.decorator",
     "email.mime.multipart", "email.mime.text", "email.mime.base",
     "dns.resolver", "dns.rdtypes", "dns.rdtypes.IN", "dns.rdtypes.ANY",
+    # Optional integrations embedded so 'doctor' reports them as available.
+    # NOTE: python-nmap / playwright / graphviz still need their system binary
+    # (nmap, chromium, graphviz dot) when the host wants them effective.
+    "nmap", "graphviz", "networkx",
 ]
 
 datas = [
@@ -56,13 +66,13 @@ if (ROOT / "gui" / "static").exists():
 a = Analysis(
     ['bazooka.py'],
     pathex=[str(ROOT)],
-    binaries=[],
-    datas=datas,
-    hiddenimports=hidden_modules,
+    binaries=_pw_binaries,
+    datas=datas + _pw_datas,
+    hiddenimports=hidden_modules + _pw_hiddenimports,
     hookspath=[],
     runtime_hooks=[],
     excludes=[
-        'tkinter', 'matplotlib', 'pytest', 'playwright',
+        'tkinter', 'matplotlib', 'pytest',
         'PyQt5', 'PyQt6', 'PySide2', 'PySide6',
         'IPython', 'ipykernel', 'notebook', 'jupyter',
         'pandas', 'numpy', 'scipy', 'sklearn',
