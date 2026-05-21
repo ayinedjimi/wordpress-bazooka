@@ -27,7 +27,14 @@ app = FastAPI(title="WordPress BAZOOKA", version="0.1.0")
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 STATIC_DIR = Path(__file__).parent / "static"
-LOOT_DIR = ROOT / "loot"
+
+# Loot must be written to the directory the user launched bazooka.exe from,
+# NOT inside the PyInstaller _MEI temp extraction dir.
+# When frozen, Path(__file__).parent is _MEIxxx; we use the CWD instead.
+import os as _os
+_FROZEN = getattr(sys, "frozen", False)
+LOOT_DIR = (Path(_os.getcwd()) if _FROZEN else ROOT) / "loot"
+LOOT_DIR.mkdir(parents=True, exist_ok=True)
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 if STATIC_DIR.exists():
