@@ -16,6 +16,17 @@
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/01-dashboard.png" alt="Dashboard" width="49%"/>
+  <img src="docs/screenshots/02-scan-running.png" alt="Scan running" width="49%"/>
+</p>
+<p align="center">
+  <img src="docs/screenshots/03-scan-complete.png" alt="Scan complete" width="49%"/>
+  <img src="docs/screenshots/04-report.png" alt="Report" width="49%"/>
+</p>
+
 ## English
 
 WordPress BAZOOKA is a full-stack automated security framework for WordPress that combines reconnaissance, enumeration, vulnerability scanning, exploit-class checks and infrastructure analysis into a single fast workflow. It ships with both a CLI and a real-time web GUI.
