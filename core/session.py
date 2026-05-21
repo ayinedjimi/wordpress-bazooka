@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import random
 import time
+from datetime import datetime
 from typing import Any, Optional
 
 import httpx
@@ -183,6 +184,32 @@ class BazookaSession:
             return self.custom_ua
         return random.choice(USER_AGENTS)
 
+    @staticmethod
+    def _parse_retry_after(header: Optional[str], default: int = 5, cap: int = 30) -> int:
+        """Parse a Retry-After header. Accepts integer seconds OR HTTP-date.
+
+        Per RFC 7231, Retry-After may be a delta-seconds OR an HTTP-date. The
+        old code called int() unconditionally and crashed on dates. We clamp
+        the result to [1, cap] seconds.
+        """
+        if not header:
+            return default
+        s = header.strip()
+        if s.isdigit():
+            try:
+                return max(1, min(cap, int(s)))
+            except ValueError:
+                return default
+        # Try HTTP-date (RFC 1123 / 850 / asctime)
+        try:
+            from email.utils import parsedate_to_datetime
+            target = parsedate_to_datetime(s)
+            now = datetime.now(target.tzinfo) if target.tzinfo else datetime.now()
+            delta = (target - now).total_seconds()
+            return max(1, min(cap, int(delta)))
+        except Exception:
+            return default
+
     async def _throttle(self) -> None:
         if self.rate_limit <= 0:
             return
@@ -324,8 +351,7 @@ class BazookaSession:
                 # Track blocking
                 if response.status_code == 429:
                     self._consecutive_blocks += 1
-                    retry_after = int(response.headers.get("Retry-After", "5"))
-                    wait = min(retry_after, 30)
+                    wait = self._parse_retry_after(response.headers.get("Retry-After"))
                     # Adaptive: slow down rate limit
                     if self._consecutive_blocks >= 3:
                         self.rate_limit = max(1.0, self.rate_limit * 0.5)
@@ -333,10 +359,11 @@ class BazookaSession:
                     continue
                 elif response.status_code == 403:
                     self._consecutive_blocks += 1
-                    # If we're getting blocked repeatedly, slow down
+                    # Don't reset the counter on adaptation — a target that keeps
+                    # blocking after a slowdown should keep being detected so we
+                    # can throttle further on the next iteration.
                     if self._consecutive_blocks >= 10:
                         self.rate_limit = max(1.0, self.rate_limit * 0.7)
-                        self._consecutive_blocks = 0
                 else:
                     self._consecutive_blocks = max(0, self._consecutive_blocks - 1)
 

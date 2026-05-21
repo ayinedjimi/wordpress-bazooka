@@ -61,7 +61,7 @@ class SQLiScannerModule(BazookaModule):
     name = "vuln.sqli_scanner"
     phase = "vuln"
     description = "SQL Injection scanner (error-based + time-based blind)"
-    profiles = ["standard", "aggressive"]
+    profiles = ["standard", "aggressive", "bugbounty"]
 
     async def run(self, ctx: ScanContext, session: BazookaSession) -> ModuleResult:
         result = ModuleResult()
@@ -216,4 +216,5 @@ class SQLiScannerModule(BazookaModule):
         return result
 
     def should_run(self, ctx) -> bool:
-        return ctx.profile != "bugbounty"
+        # All gating is done via the `profiles` whitelist + intrusive_ok flag.
+        return ctx.profile in self.profiles

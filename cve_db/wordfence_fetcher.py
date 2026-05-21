@@ -65,6 +65,10 @@ def _kev_lookup(cve_id: str) -> bool:
 
 _MEM_CACHE: dict[str, dict] = {}
 _CACHE_LOADED = False
+# Async lock guarding _MEM_CACHE mutations and disk writes. asyncio.gather()
+# triggers concurrent writes from cve_matcher when many plugins are matched;
+# without this we corrupt wpvuln_cache.json or lose entries on race.
+_CACHE_LOCK = asyncio.Lock()
 
 
 def _load_cache() -> dict[str, dict]:
@@ -83,26 +87,56 @@ def _load_cache() -> dict[str, dict]:
     return _MEM_CACHE
 
 
-def _save_cache() -> None:
+def _save_cache_sync() -> None:
+    """Atomic disk write: write to .tmp then rename so a crash doesn't truncate."""
     try:
-        with open(CACHE_PATH, "w", encoding="utf-8") as f:
+        tmp = CACHE_PATH.with_suffix(CACHE_PATH.suffix + ".tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(_MEM_CACHE, f)
+        tmp.replace(CACHE_PATH)
     except Exception:
         pass
+
+
+async def _save_cache() -> None:
+    """Off-load JSON dump to a worker thread to avoid blocking the event loop."""
+    try:
+        await asyncio.to_thread(_save_cache_sync)
+    except Exception:
+        pass
+
+
+# Strip pre-release suffixes BEFORE digit extraction so "1.2-beta3" does NOT
+# parse as (1,2,3) and falsely outrank "1.2.2". Anything after a non-digit
+# alphabetic marker (-, _, +, space) and a letter is treated as pre-release.
+_PRERELEASE_RE = re.compile(r"[-_+\s][A-Za-z].*$")
+_BUILD_META_RE = re.compile(r"\+[^\s]+$")  # SemVer build metadata
+
+
+def _strip_prerelease(v: str) -> str:
+    v = _BUILD_META_RE.sub("", v)
+    v = _PRERELEASE_RE.sub("", v)
+    return v
 
 
 def _parse_ver(v: str) -> tuple:
     if not v or v == "*":
         return ()
-    parts = re.findall(r"\d+", v)
+    base = _strip_prerelease(v.strip())
+    parts = re.findall(r"\d+", base)
     return tuple(int(p) for p in parts) if parts else ()
 
 
 def _ver_cmp(a: str, b: str) -> int:
+    """Compare two version strings. Returns -1, 0, 1.
+
+    Pre-releases (1.2-beta, 1.2-rc1) are stripped and treated as the base
+    version. This is conservative: we'd rather over-report a CVE on a pre-release
+    than miss it. Build metadata (+xxx) is also stripped per SemVer.
+    """
     pa, pb = _parse_ver(a), _parse_ver(b)
     if not pa or not pb:
         return 0
-    # Pad with zeros so "5.0" == "5.0.0", not "5.0" < "5.0.0"
     n = max(len(pa), len(pb))
     pa = pa + (0,) * (n - len(pa))
     pb = pb + (0,) * (n - len(pb))
@@ -308,7 +342,7 @@ def match_plugin_cves(slug: str, version: Optional[str]) -> list[dict]:
                 vulns = []
             entry = {"_ts": time.time(), "vulns": vulns}
             _MEM_CACHE[slug_l] = entry
-            _save_cache()
+            _save_cache_sync()
     vulns = (entry or {}).get("vulns") or []
     out: list[dict] = []
     for v in vulns:
@@ -338,9 +372,10 @@ async def match_plugin_cves_async(slug: str, version: Optional[str]) -> list[dic
     entry = _MEM_CACHE.get(slug_l)
     if entry is None or (time.time() - entry.get("_ts", 0) > CACHE_TTL):
         vulns = await _fetch_one(slug_l)
-        entry = {"_ts": time.time(), "vulns": vulns}
-        _MEM_CACHE[slug_l] = entry
-        _save_cache()
+        async with _CACHE_LOCK:
+            entry = {"_ts": time.time(), "vulns": vulns}
+            _MEM_CACHE[slug_l] = entry
+            await _save_cache()
     vulns = entry.get("vulns") or []
     out: list[dict] = []
     for v in vulns:
@@ -369,9 +404,10 @@ async def match_theme_cves_async(slug: str, version: Optional[str]) -> list[dict
     entry = _MEM_CACHE.get(cache_key)
     if entry is None or (time.time() - entry.get("_ts", 0) > CACHE_TTL):
         vulns = await _fetch_one(slug_l, is_theme=True)
-        entry = {"_ts": time.time(), "vulns": vulns}
-        _MEM_CACHE[cache_key] = entry
-        _save_cache()
+        async with _CACHE_LOCK:
+            entry = {"_ts": time.time(), "vulns": vulns}
+            _MEM_CACHE[cache_key] = entry
+            await _save_cache()
     vulns = entry.get("vulns") or []
     out: list[dict] = []
     for v in vulns:
@@ -422,9 +458,10 @@ async def match_infra_cves_async(kind: str, version: Optional[str]) -> list[dict
     entry = _MEM_CACHE.get(cache_key)
     if entry is None or (time.time() - entry.get("_ts", 0) > CACHE_TTL):
         vulns = await _fetch_infra(kind, version)
-        entry = {"_ts": time.time(), "vulns": vulns}
-        _MEM_CACHE[cache_key] = entry
-        _save_cache()
+        async with _CACHE_LOCK:
+            entry = {"_ts": time.time(), "vulns": vulns}
+            _MEM_CACHE[cache_key] = entry
+            await _save_cache()
     vulns = entry.get("vulns") or []
     out: list[dict] = []
     for v in vulns:
@@ -463,7 +500,8 @@ async def match_core_cves_async(version: Optional[str]) -> list[dict]:
                             vulns = payload.get("vulnerability") or []
         except Exception:
             vulns = []
-        entry = {"_ts": time.time(), "vulns": vulns}
-        _MEM_CACHE[cache_key] = entry
-        _save_cache()
+        async with _CACHE_LOCK:
+            entry = {"_ts": time.time(), "vulns": vulns}
+            _MEM_CACHE[cache_key] = entry
+            await _save_cache()
     return [_normalize(v, f"wp-core:{version}") for v in (entry.get("vulns") or [])]

@@ -154,6 +154,9 @@ class TorProcess:
                 return False
             cookie_hex = cookie_path.read_bytes().hex().upper()
             with socket.create_connection(("127.0.0.1", self.control_port), timeout=5) as s:
+                # Inherit timeout on subsequent recv calls — without this the
+                # socket defaults back to blocking forever if Tor wedges.
+                s.settimeout(5)
                 s.sendall(f"AUTHENTICATE {cookie_hex}\r\n".encode())
                 resp = s.recv(256)
                 if b"250" not in resp:

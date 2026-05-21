@@ -51,7 +51,7 @@ class XSSScannerModule(BazookaModule):
     name = "vuln.xss_scanner"
     phase = "vuln"
     description = "Reflected XSS scanner across common WP query parameters"
-    profiles = ["standard", "aggressive"]
+    profiles = ["standard", "aggressive", "bugbounty"]
 
     async def run(self, ctx: ScanContext, session: BazookaSession) -> ModuleResult:
         result = ModuleResult()
@@ -147,4 +147,4 @@ class XSSScannerModule(BazookaModule):
         return result
 
     def should_run(self, ctx) -> bool:
-        return ctx.profile != "bugbounty"
+        return ctx.profile in self.profiles

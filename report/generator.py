@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from jinja2 import Template
+from jinja2 import Environment, BaseLoader, select_autoescape
 from rich.console import Console
 
 from report.html_template import HTML_TEMPLATE
@@ -95,7 +95,15 @@ def generate_html_report(ctx: ScanContext, output_dir: Path) -> Path:
         "remediation_plan": _build_remediation_plan(findings),
     }
 
-    template = Template(HTML_TEMPLATE)
+    # Autoescape: any value rendered with {{ }} in the template is HTML-escaped.
+    # Pre-rendered HTML blocks (banner, score blocks built by this module) are
+    # marked with `| safe` in the template so they remain raw. Target-controlled
+    # data (titles, descriptions, slugs, etc.) cannot inject XSS into the report.
+    env = Environment(
+        loader=BaseLoader(),
+        autoescape=select_autoescape(enabled_extensions=("html", "xml"), default_for_string=True),
+    )
+    template = env.from_string(HTML_TEMPLATE)
     html_content = template.render(**template_data)
 
     output_file = output_dir / f"RAPPORT_BAZOOKA_{ctx.target.domain}.html"

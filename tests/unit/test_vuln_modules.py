@@ -312,13 +312,13 @@ def test_xss_encoded_output():
     assert info_finding.severity == Severity.INFO
 
 
-def test_xss_should_run_skips_bugbounty():
-    """XSS scanner skips bugbounty profile."""
+def test_xss_should_run_allows_bugbounty():
+    """XSS scanner runs on the bugbounty profile (the most permissive)."""
     from modules.vuln.xss_scanner import XSSScannerModule
 
     module = XSSScannerModule()
     ctx = make_ctx(profile="bugbounty")
-    assert module.should_run(ctx) is False
+    assert module.should_run(ctx) is True
 
 
 # ---------------------------------------------------------------------------
@@ -370,13 +370,13 @@ def test_sqli_no_error():
     assert info_finding.severity == Severity.INFO
 
 
-def test_sqli_should_run_skips_bugbounty():
-    """SQLi scanner skips bugbounty profile."""
+def test_sqli_should_run_allows_bugbounty():
+    """SQLi scanner runs on the bugbounty profile (the most permissive)."""
     from modules.vuln.sqli_scanner import SQLiScannerModule
 
     module = SQLiScannerModule()
     ctx = make_ctx(profile="bugbounty")
-    assert module.should_run(ctx) is False
+    assert module.should_run(ctx) is True
 
 
 # ---------------------------------------------------------------------------

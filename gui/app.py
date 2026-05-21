@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import sys
 import uuid
 from datetime import datetime
@@ -119,8 +120,12 @@ async def start_scan(request: Request):
         "ctx": None,
     }
 
-    # Launch scan in background
-    asyncio.create_task(_run_scan(scan_id, url, profile, rate_limit, threads, use_tor))
+    # Launch scan in background. Store the Task ref so the GC cannot collect
+    # it mid-execution (CPython will silently cancel orphan tasks).
+    task = asyncio.create_task(
+        _run_scan(scan_id, url, profile, rate_limit, threads, use_tor)
+    )
+    scans[scan_id]["_task"] = task
 
     return RedirectResponse(f"/scan/{scan_id}", status_code=303)
 
@@ -130,9 +135,13 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
     """Background scan task — mirrors console output to live log."""
     scan = scans[scan_id]
     log = scan["logs"]
+    # Cap live-log size to avoid unbounded growth on long scans (GUI history)
+    MAX_LOG_LINES = 5000
 
     def L(msg: str):
         log.append(f"[{_ts()}] {msg}")
+        if len(log) > MAX_LOG_LINES:
+            del log[: len(log) - MAX_LOG_LINES]
 
     try:
         # Banner
@@ -369,7 +378,9 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
         tor_ref = scan.get("_tor")
         if tor_ref is not None:
             try:
-                tor_ref.stop()
+                # TorProcess.stop() calls subprocess.wait(timeout=5) which would
+                # block FastAPI's event loop. Off-load to a worker thread.
+                await asyncio.to_thread(tor_ref.stop)
                 scan.pop("_tor", None)
             except Exception:
                 pass
@@ -458,10 +469,34 @@ _BACK_BUTTON_HTML = """
 <style>@media print { #bz-back-nav { display:none !important; } }</style>
 """
 
+_SAFE_DOMAIN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,253}$")
+
+
+def _safe_domain_dir(domain: str) -> Optional[Path]:
+    """Validate the domain segment and confine the resolved path to LOOT_DIR.
+
+    Rejects path-traversal attempts (`..`, slashes, NULs) and anything that
+    resolves outside the loot directory.
+    """
+    if not domain or not _SAFE_DOMAIN_RE.match(domain):
+        return None
+    if domain in (".", ".."):
+        return None
+    candidate = (LOOT_DIR / domain).resolve()
+    try:
+        candidate.relative_to(LOOT_DIR.resolve())
+    except ValueError:
+        return None
+    return candidate
+
+
 @app.get("/report/{domain}")
 async def view_report(domain: str):
     """Serve the generated HTML report with an injected back-to-dashboard button."""
-    report_file = LOOT_DIR / domain / f"RAPPORT_BAZOOKA_{domain}.html"
+    safe_dir = _safe_domain_dir(domain)
+    if safe_dir is None:
+        return HTMLResponse("<h1>Invalid domain</h1>", status_code=400)
+    report_file = safe_dir / f"RAPPORT_BAZOOKA_{domain}.html"
     if not report_file.exists():
         return HTMLResponse("<h1>Report not found</h1>", status_code=404)
     html = report_file.read_text(encoding="utf-8")
@@ -482,7 +517,10 @@ async def view_report(domain: str):
 @app.get("/api/findings/{domain}")
 async def api_findings(domain: str):
     """API endpoint for findings JSON."""
-    findings_file = LOOT_DIR / domain / "findings.json"
+    safe_dir = _safe_domain_dir(domain)
+    if safe_dir is None:
+        return {"error": "Invalid domain"}
+    findings_file = safe_dir / "findings.json"
     if findings_file.exists():
         return json.loads(findings_file.read_text(encoding="utf-8"))
     return {"error": "Not found"}

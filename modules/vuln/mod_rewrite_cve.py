@@ -66,8 +66,12 @@ class ModRewriteCVEModule(BazookaModule):
             # (WordPress often redirects wp-config.php requests when path confusion works)
             if resp.status_code in (301, 302, 307):
                 location = resp.headers.get("location", "")
-                # If it redirects to the file without %3f, the rewrite decoded it
-                if label.replace(".", "") in location.replace(".", "").lower() or location:
+                # Only flag if Location actually contains the target filename;
+                # generic redirects (e.g. trailing-slash, HTTPS upgrade) are NOT
+                # path confusion. The previous `or location` made this finding
+                # fire on every 30x — a major false positive source.
+                target_token = label.replace(".", "").lower()
+                if target_token and target_token in location.replace(".", "").lower():
                     vulnerable = True
                     evidence_excerpt = f"Redirect {resp.status_code} -> {location}"
 
