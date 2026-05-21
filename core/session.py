@@ -80,10 +80,12 @@ WAF_SIGNATURES = {
 
 
 class ResponseCache:
-    """Simple in-memory cache with TTL support."""
+    """In-memory cache with TTL + LRU bound (avoids memory leak on long scans)."""
 
-    def __init__(self) -> None:
-        self._cache: dict[str, tuple[float, httpx.Response]] = {}
+    def __init__(self, max_size: int = 1000) -> None:
+        from collections import OrderedDict
+        self._cache: "OrderedDict[str, tuple[float, httpx.Response]]" = OrderedDict()
+        self._max_size = max_size
 
     def _key(self, method: str, url: str, **kwargs: Any) -> str:
         raw = f"{method}:{url}:{sorted(kwargs.get('headers', {}).items())}"
@@ -94,6 +96,7 @@ class ResponseCache:
         if key in self._cache:
             ts, resp = self._cache[key]
             if time.time() - ts < ttl:
+                self._cache.move_to_end(key)  # LRU touch
                 return resp
             del self._cache[key]
         return None
@@ -101,6 +104,10 @@ class ResponseCache:
     def put(self, method: str, url: str, response: httpx.Response, **kwargs: Any) -> None:
         key = self._key(method, url, **kwargs)
         self._cache[key] = (time.time(), response)
+        self._cache.move_to_end(key)
+        # Evict oldest entries beyond the cap
+        while len(self._cache) > self._max_size:
+            self._cache.popitem(last=False)
 
     def clear(self) -> None:
         self._cache.clear()

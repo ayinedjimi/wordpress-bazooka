@@ -224,7 +224,7 @@ class ScanEngine:
         start = time.time()
 
         console.print()
-        console.print(" [bold magenta]WORDPRESS BAZOOKA[/bold magenta] v0.1.0")
+        console.print(" [bold magenta]WORDPRESS BAZOOKA[/bold magenta] v1.0.0")
         console.print(f" Target: [bold]{self.target.url}[/bold]")
         console.print(f" Profile: {self.profile} | Threads: {self.threads} | Rate: {self.session.rate_limit} req/s")
         console.print()

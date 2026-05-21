@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    name: Build exe and attach to release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install project (full + dev) and PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[full,dev] pyinstaller
+
+      - name: Build with PyInstaller
+        run: pyinstaller bazooka.spec --noconfirm
+
+      - name: Upload exe as release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/bazooka.exe
+          fail_on_unmatched_files: true

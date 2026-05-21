@@ -23,7 +23,7 @@ from core.engine import ScanEngine, ScanContext
 from core.models import Severity
 from report.generator import generate_reports
 
-app = FastAPI(title="WordPress BAZOOKA", version="0.1.0")
+app = FastAPI(title="WordPress BAZOOKA", version="1.0.0")
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 STATIC_DIR = Path(__file__).parent / "static"
@@ -136,7 +136,7 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
 
     try:
         # Banner
-        L("WORDPRESS BAZOOKA v0.1.0")
+        L("WORDPRESS BAZOOKA v1.0.0")
         L(f"Target: {url}")
         L(f"Profile: {profile} | Threads: {threads} | Rate: {rate_limit} req/s")
         L("")

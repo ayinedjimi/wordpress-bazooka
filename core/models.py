@@ -77,7 +77,7 @@ class Finding(BaseModel):
 
 
 class ScanMeta(BaseModel):
-    bazooka_version: str = "0.1.0"
+    bazooka_version: str = "1.0.0"
     schema_version: str = "2.0"
     cve_db_version: str = ""
     target: str = ""

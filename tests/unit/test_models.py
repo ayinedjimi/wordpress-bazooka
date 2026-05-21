@@ -97,7 +97,7 @@ def test_theme_model():
 
 def test_scan_meta_defaults():
     m = ScanMeta()
-    assert m.bazooka_version == "0.1.0"
+    assert m.bazooka_version == "1.0.0"
     assert m.schema_version == "2.0"
     assert m.total_requests == 0
 

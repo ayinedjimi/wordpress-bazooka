@@ -1,155 +1,282 @@
 <h1 align="center">
-  WordPress BAZOOKA
+
+```
+██████╗  █████╗ ███████╗ ██████╗  ██████╗ ██╗  ██╗ █████╗ 
+██╔══██╗██╔══██╗╚══███╔╝██╔═══██╗██╔═══██╗██║ ██╔╝██╔══██╗
+██████╔╝███████║  ███╔╝ ██║   ██║██║   ██║█████╔╝ ███████║
+██╔══██╗██╔══██║ ███╔╝  ██║   ██║██║   ██║██╔═██╗ ██╔══██║
+██████╔╝██║  ██║███████╗╚██████╔╝╚██████╔╝██║  ██╗██║  ██║
+╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
+```
+
+WordPress BAZOOKA
 </h1>
 
 <p align="center">
-  <b>Automated WordPress Penetration Testing & Security Audit Framework</b><br>
-  <i>Un seul tir, tous les angles couverts.</i>
+  <b>WordPress Penetration Testing & Security Audit Framework</b><br>
+  <i>One shot. Every angle covered. &mdash; Un seul tir, tous les angles couverts.</i>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/python-3.11+-blue.svg" />
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" />
-  <img src="https://img.shields.io/badge/status-active-success.svg" />
-  <img src="https://img.shields.io/badge/CVE_sources-wpvulnerability.net-orange.svg" />
+  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License"/>
+  <img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python 3.11+"/>
+  <img src="https://img.shields.io/badge/release-v1.0.0-brightgreen.svg" alt="Release v1.0.0"/>
+  <img src="https://img.shields.io/badge/modules-87-purple.svg" alt="87 modules"/>
+  <img src="https://img.shields.io/badge/CVE_DB-157_plugins-orange.svg" alt="CVE DB 157 plugins"/>
+  <img src="https://img.shields.io/badge/Tor-bundled-7D4698.svg" alt="Tor bundled"/>
+  <img src="https://img.shields.io/badge/Windows-portable_exe-0078D6.svg" alt="Windows portable"/>
 </p>
+
+<p align="center">
+  <a href="#-english">English</a> &nbsp;|&nbsp; <a href="#-francais">Francais</a> &nbsp;|&nbsp;
+  <a href="https://github.com/ayinedjimi/wordpress-bazooka/releases/latest">Download exe</a> &nbsp;|&nbsp;
+  <a href="https://ayinedjimi-consultants.fr">ayinedjimi-consultants.fr</a>
+</p>
+
+---
+
+> **WordPress BAZOOKA** is a fast, modular **WordPress security scanner** that bundles reconnaissance, enumeration, vulnerability detection, exploit-class checks and infrastructure analysis into a single workflow with a real-time GUI. A modern **WPScan alternative** focused on speed, low request budget, and zero false positives.
+>
+> **WordPress BAZOOKA** est un **scanner securite WordPress** rapide et modulaire qui regroupe recon, enumeration, detection de vulnerabilites, verifications de classe exploit et analyse infrastructure dans un flux unique avec GUI temps reel. Une alternative moderne a WPScan, optimisee pour la vitesse, la sobriete reseau et zero faux positif.
+
+---
+
+> [!WARNING]
+> **DISCLAIMER &mdash; LEGAL USE ONLY / USAGE LEGAL UNIQUEMENT**
+>
+> This tool is intended **exclusively** for authorized security testing, defensive auditing, and research on systems you own or have **explicit written permission** to test. Unauthorized scanning of third-party WordPress sites is illegal in most jurisdictions (CFAA, GDPR art. 32, LCEN, Godfrain). The author declines all liability for misuse.
+>
+> Cet outil est destine **exclusivement** aux tests de securite autorises, audits defensifs et recherche sur des systemes dont vous etes proprietaire ou avez l'autorisation ecrite explicite de tester. Tout scan non autorise de sites WordPress tiers est illegal (CFAA, RGPD art. 32, LCEN, loi Godfrain). L'auteur decline toute responsabilite en cas d'usage abusif.
 
 ---
 
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/01-dashboard.png" alt="Dashboard" width="49%"/>
+  <img src="docs/screenshots/01-dashboard.png" alt="Dashboard"     width="49%"/>
   <img src="docs/screenshots/02-scan-running.png" alt="Scan running" width="49%"/>
 </p>
 <p align="center">
   <img src="docs/screenshots/03-scan-complete.png" alt="Scan complete" width="49%"/>
-  <img src="docs/screenshots/04-report.png" alt="Report" width="49%"/>
+  <img src="docs/screenshots/04-report.png" alt="HTML report" width="49%"/>
 </p>
 
+---
+
 ## English
-
-WordPress BAZOOKA is a full-stack automated security framework for WordPress that combines reconnaissance, enumeration, vulnerability scanning, exploit-class checks and infrastructure analysis into a single fast workflow. It ships with both a CLI and a real-time web GUI.
-
-### Why BAZOOKA
-
-- **40× faster than WPScan** on real targets — our scan completes in 2 min on average where WPScan takes 96 min, while producing **more CVE matches** (we use the free wpvulnerability.net feed, no API token required).
-- **0 false positive WPScan typically reports** (WPScan can confuse users / themes / authors with plugin slugs — BAZOOKA does not).
-- **Detects CVE on plugins, WordPress core, and infrastructure** (Apache, nginx, PHP, MySQL, MariaDB, Redis, Memcached) — most scanners do plugins only.
-- **Multi-vector user enumeration** (REST API, `?author=N` brute, oEmbed, sitemap) and passive plugin discovery that does not depend on aggressive bruteforce wordlists.
-- **Report-ready**: HTML, DOCX and JSON output with OWASP / CWE / MITRE mapping.
-
-### Features
-
-| Phase | Modules |
-|---|---|
-| **Recon** | DNS / DMARC / SPF, WAF detection, SSL/TLS, headers, WHOIS, CT logs, robots.txt, technology stack, subdomain enum, wayback, Google dorking |
-| **Enum** | WP version, users (4 vectors), plugins (passive + meta + wordlist), themes, REST API, XML-RPC, backup finder, debug log, config audit, dev tools (Search-Replace-DB, Adminer, phpMyAdmin…) |
-| **Vuln** | CORS, security headers, CVE matching (plugins + core + infra via wpvulnerability.net live feed), SQLi, XSS, SSRF, mod_rewrite path confusion, rate limit, CSRF, IDOR, auth bypass, REST API exposure, open ports |
-| **Exploit** | XML-RPC bruteforce, wordlist generator, origin bypass, Git dumper, API key extraction |
-| **Infra** | Network scan, SSL cert enum, service detect, lateral movement hints |
 
 ### Quickstart
 
 ```bash
-pip install -e .
-bazooka scan https://your-target.com
+# Option 1 - Windows portable exe (89 MB, zero install, Tor bundled)
+bazooka.exe https://target.example --profile standard
+
+# Option 2 - From source (Python 3.11+)
+git clone https://github.com/ayinedjimi/wordpress-bazooka
+cd wordpress-bazooka && pip install -e .
+bazooka https://target.example --profile standard
+
+# Option 3 - Real-time GUI (FastAPI + WebSocket)
+python run_gui.py            # then open http://127.0.0.1:8666
 ```
 
-Profiles: `quick` (~25s), `standard` (~2min), `aggressive` (~3min, full plugin bruteforce).
+### What's in the box
 
-### Web GUI
+| Category            | Count | Highlights |
+|---------------------|------:|------------|
+| **Recon modules**       | 14 | DNS/DMARC/SPF, WAF detect, SSL/TLS, CT logs, WHOIS, subdomain enum, wayback, Google dorking, origin finder, OSINT |
+| **Enum modules**        | 24 | WP version, users (4 vectors), plugins (passive + meta + 13k wordlist), themes, REST/XML-RPC/GraphQL, backup finder (123 paths + magic bytes), debug log, dev tools (Adminer, Search-Replace-DB, info.php, Redis/Memcached panels) |
+| **Vuln modules (DAST)** | 30 | XSS multi-payload (10 params), SQLi error+time-based (8 params), CSRF, SSRF (XML-RPC), LFI, XXE, file upload, CORS, host-header injection, **mod_rewrite CVE-2024-38474**, IDOR, open redirect, password reset poisoning, nuclei wrapper |
+| **Exploit modules**     | 14 | XML-RPC bruteforce, wp-login bruteforce, password spray, Git dumper, API key extraction, origin bypass, SSRF port scan, WooCommerce IDOR, wp-cron DoS |
+| **Infra modules**       |  5 | Network scan, SSL cert enum, service detect, vhost enum, lateral movement hints |
+| **CVE Database**        |  &mdash; | 157 plugins + 16 themes + 23 WP core + 9 infra (Apache/nginx/PHP/MySQL/MariaDB/Redis/Memcached/ImageMagick/curl) + **CISA KEV** &mdash; 15.5 MB JSON pre-warmed and bundled in the exe |
+| **GUI**                 |  &mdash; | FastAPI + WebSocket, ASCII Shadow banner, talkative mascot per phase, sticky activity bar, live findings stream |
+
+**Total auto-discovered modules: 87.** All inherit `core/base.py` `BaseModule` and are loaded by the engine at runtime &mdash; drop a `.py` in `modules/<phase>/`, it ships.
+
+### Benchmarks
+
+Real numbers measured on the bundled test bench and on a consented production WordPress site.
+
+| Target                              | Tool         | Time     | Plugins | Users | CVEs        | Requests | False positives |
+|-------------------------------------|--------------|---------:|--------:|------:|------------:|---------:|----------------:|
+| **DVWP extended** (deliberately vuln) | BAZOOKA      | 2 min 10 |      4 |    2 | 4/4 ground-truth + 12 core + 8 infra + 11 misconfigs = **82** | ~1.1 k | 0 |
+| **Production WordPress** (aggressive) | BAZOOKA      | 2 min 25 |     14 |    1 |           3 |   ~1.4 k | 0 |
+| **Production WordPress** (aggressive) | WPScan       | 96 min   |     14 |    1 |           1 | ~189 k  | 3 |
+| **OVH-hosted target via Tor SOCKS5** | BAZOOKA `--tor --rate-limit 2` | 4 min 12 |  &mdash;     |  &mdash;  | 36 findings | low      | 0 (no IP ban) |
+
+> Result: **~40x faster, ~135x fewer requests, 0 FP vs 3** on real targets. BAZOOKA does not confuse usernames, themes or authors with plugin slugs.
+
+### Usage examples
 
 ```bash
-python run_gui.py
-# opens http://localhost:8666
-```
+# Standard scan (~2 min, balanced)
+bazooka https://target.example --profile standard
 
-Real-time scan progress with per-module status, animated activity bar, finding stream, and one-click HTML/DOCX/JSON report.
+# Aggressive scan with custom output dir + DOCX + JSON report
+bazooka https://target.example --profile aggressive \
+        --output ./loot/target --format html,docx,json
+
+# Scan through bundled Tor SOCKS5 (target bans your IP? not anymore)
+bazooka https://target.example --tor --rate-limit 2
+
+# Quick recon-only scan (~25s)
+bazooka https://target.example --profile quick
+
+# Refresh CVE DB from wpvulnerability.net + NVD + CISA KEV
+bazooka update-db
+
+# Launch real-time GUI
+bazooka gui          # http://127.0.0.1:8666
+
+# Authenticated scan (cookie or basic-auth)
+bazooka https://target.example --cookie "wordpress_logged_in=..." --profile aggressive
+```
 
 ### Architecture
 
 ```
-core/         engine, session, models (Pydantic)
-modules/      recon/ enum/ vuln/ exploit/ infra/
-cve_db/       seed SQLite + wpvulnerability.net live integration
-report/       HTML/DOCX/JSON generators
-gui/          FastAPI + WebSocket live GUI
-data/         wordlists, priority plugins, sensitive paths
-testlab/      Docker WP lab for benchmarking
+WORDPRESSBAZOOKA/
+├── bazooka.py              # CLI entry point
+├── core/
+│   ├── engine.py           # 5-phase orchestrator, async, rate-limited
+│   ├── session.py          # HTTP/2 session, retries, Tor wiring
+│   ├── tor_proxy.py        # embedded tor.exe controller (SOCKS5 9150)
+│   └── models.py           # Finding, Severity, OWASP/CWE/ATT&CK mapping
+├── modules/
+│   ├── recon/   (14)       # Phase 1 - passive surface
+│   ├── enum/    (24)       # Phase 2 - WP fingerprinting
+│   ├── vuln/    (30)       # Phase 3 - DAST + CVE matching
+│   ├── exploit/ (14)       # Phase 4 - PoC-class checks
+│   └── infra/   (5)        # Phase 5 - infrastructure
+├── cve_db/                 # 157+16+23+9 CVEs, prewarm cache, SQLite + JSON
+├── gui/                    # FastAPI + WebSocket dashboard
+├── report/                 # HTML / DOCX / JSON renderers
+├── data/                   # wordlists, signatures, payloads
+└── vendor/                 # tor.exe + geoip (Windows, 19 MB)
 ```
 
-### Output Example
+**Scan pipeline:** `recon -> enum -> vuln -> exploit -> infra`. Each phase streams findings to the GUI over WebSocket and updates the live activity bar.
 
-```
-[SCORE] Max CVSS: 9.8/10
-  CRITICAL: 18 | HIGH: 20 | MEDIUM: 172 | LOW: 6 | INFO: 37
- Completed in 208s | 1207 requests sent
- Plugins: 29 detected | CVE matched: 144 | Users: admin, Editor
-```
+### Detection capabilities
 
-### Related projects
+| OWASP Top 10            | CWE                | Module                                  | Status |
+|-------------------------|--------------------|-----------------------------------------|:------:|
+| A01 Broken Access Ctrl  | CWE-639 / 285      | `vuln/idor_check`, `vuln/auth_bypass`   | Yes |
+| A02 Crypto Failures     | CWE-319 / 326      | `recon/ssl_scan`, `vuln/security_headers` | Yes |
+| A03 Injection           | CWE-89 / 79        | `vuln/sqli_scanner`, `vuln/xss_scanner` | Yes |
+| A04 Insecure Design     | CWE-1021 / 352     | `vuln/csrf_check`, `vuln/host_header_injection` | Yes |
+| A05 Misconfiguration    | CWE-16             | `vuln/misconfig_check`, `enum/wp_config_audit` | Yes |
+| A06 Vuln. Components    | CWE-1395 / 1104    | `vuln/cve_matcher`, `vuln/plugin_vulns_active` | Yes |
+| A07 Auth Failures       | CWE-307 / 521      | `exploit/wp_login_bruteforce`, `vuln/password_policy` | Yes |
+| A08 Software & Data Int.| CWE-502 / 829      | `vuln/file_upload`, `vuln/xxe_scanner`  | Yes |
+| A09 Logging Failures    | CWE-778            | `enum/debug_log`                        | Yes |
+| A10 SSRF                | CWE-918            | `vuln/ssrf_xmlrpc`, `exploit/ssrf_port_scan` | Yes |
+| KEV  CVE-2024-38474     | CWE-22             | `vuln/mod_rewrite_cve`                  | Yes |
 
-- **[wordpress-vulnerable-lab](https://github.com/AYI-NEDJIMI/wordpress-vulnerable-lab)** — the companion Docker lab packing 30+ vulnerable WordPress plugins with documented CVE ground truth.
-- **[ayinedjimi-consultants.fr](https://ayinedjimi-consultants.fr)** — WordPress security guides, hardening checklists and consulting.
+All findings ship with **OWASP / CWE / MITRE ATT&CK** mapping in JSON, DOCX and HTML output.
 
-### License
+### CVE sources
 
-MIT. By [Ayi NEDJIMI](https://ayinedjimi-consultants.fr).
+- **wpvulnerability.net** &mdash; live feed, no API token, aggregates Wordfence + Patchstack + NVD + JVN + WPScan public data
+- **NVD** &mdash; WP core + infra components (Apache, nginx, PHP, MySQL, MariaDB, Redis, Memcached, ImageMagick, curl)
+- **CISA KEV** &mdash; known-exploited catalog tagging
+- Local **SQLite + JSON cache** (`cve_db/bazooka_cve.db` + `prewarm_cache.json`) pre-warmed and bundled in the portable exe so the first scan works **fully offline**
+
+### Companion projects
+
+- [`wordpress-vulnerable-lab`](https://github.com/ayinedjimi/wordpress-vulnerable-lab) &mdash; the DVWP-extended lab used in the benchmarks above
+- WordPress hardening guides at [ayinedjimi-consultants.fr](https://ayinedjimi-consultants.fr) &mdash; defensive counterpart to this offensive toolkit
 
 ---
 
-## Français
+## Francais
 
-WordPress BAZOOKA est un framework d'audit de sécurité automatisé pour WordPress combinant en un seul workflow reconnaissance, énumération, scan de vulnérabilités, checks exploit et analyse infrastructure. Il fournit une CLI et une GUI web temps réel.
+### Demarrage rapide
+
+```bash
+# Option 1 - Exe portable Windows (89 Mo, zero install, Tor inclus)
+bazooka.exe https://cible.exemple --profile standard
+
+# Option 2 - Depuis les sources (Python 3.11+)
+git clone https://github.com/ayinedjimi/wordpress-bazooka
+cd wordpress-bazooka && pip install -e .
+bazooka https://cible.exemple --profile standard
+
+# Option 3 - GUI temps reel (FastAPI + WebSocket)
+python run_gui.py            # puis http://127.0.0.1:8666
+```
 
 ### Pourquoi BAZOOKA
 
-- **40× plus rapide que WPScan** sur cibles réelles — notre scan finit en 2 min en moyenne là où WPScan met 96 min, avec **plus de CVE détectées** (on utilise le feed gratuit wpvulnerability.net, sans token).
-- **0 faux positif que WPScan rapporte** (WPScan confond parfois utilisateurs / thèmes / auteurs avec des slugs plugins — pas BAZOOKA).
-- **Détecte les CVE sur plugins, core WordPress, ET infrastructure** (Apache, nginx, PHP, MySQL, MariaDB, Redis, Memcached) — la plupart des scanners ne font que les plugins.
-- **Énumération users multi-vecteur** (REST API, brute `?author=N`, oEmbed, sitemap) et détection plugins passive ne dépendant pas du brute-force agressif.
-- **Reports prêts pour rendu** : HTML, DOCX et JSON avec mapping OWASP / CWE / MITRE.
+WordPress BAZOOKA est un **outil de pentest WordPress** et un framework d'**audit securite WordPress automatise** concu pour les consultants, equipes blue/red et proprietaires de sites qui veulent un verdict fiable en **quelques minutes**, pas en heures.
 
-### Démarrage rapide
+- **40x plus rapide que WPScan** sur cibles reelles &mdash; 2 min en moyenne contre 96 min &mdash; avec **plus de CVE detectees** (flux gratuit wpvulnerability.net, sans token).
+- **Zero faux positif** la ou WPScan en sort typiquement 3 (confusion users / themes / authors).
+- **Detection CVE plugins + WP core + infrastructure** (Apache, nginx, PHP, MySQL, MariaDB, Redis, Memcached) &mdash; la plupart des scanners ne couvrent que les plugins.
+- **Enumeration users multi-vecteurs** (REST, `?author=N`, oEmbed, sitemap) et decouverte de plugins **passive** &mdash; pas besoin de bourriner une wordlist de 13k entrees.
+- **Rapports prets a livrer** : HTML, DOCX, JSON avec mapping OWASP / CWE / MITRE ATT&CK.
+- **Tor SOCKS5 embarque** (`--tor`) &mdash; 19 Mo bundles, contourne les bans IP applicatifs.
+- **DAST etendu** : XSS multi-payload, SQLi error+time-based, CSRF, SSRF XML-RPC, LFI, XXE, file upload, CORS, host-header, mod_rewrite **CVE-2024-38474**, IDOR, open redirect, empoisonnement du password reset.
+
+### Profils de scan
+
+| Profil       | Duree | Cas d'usage |
+|--------------|------:|-------------|
+| `quick`      | ~25 s | Triage rapide, recon + fingerprint, faible bruit |
+| `standard`   | ~2 min | Audit equilibre par defaut, DAST complet sans bruteforce |
+| `aggressive` | ~3 min | Audit exhaustif, inclut bruteforce wp-login + spray + nuclei wrapper |
+
+### Exemples d'utilisation
 
 ```bash
-pip install -e .
-bazooka scan https://ta-cible.com
+# Scan via Tor avec rate-limit 2 req/s (cible qui ban les IP)
+bazooka https://cible.exemple --tor --rate-limit 2
+
+# Scan aggressive avec rapport DOCX + JSON
+bazooka https://cible.exemple --profile aggressive \
+        --output ./loot/cible --format html,docx,json
+
+# Rafraichir la base CVE locale
+bazooka update-db
 ```
 
-Profils : `quick` (~25s), `standard` (~2min), `aggressive` (~3min, brute-force plugins complet).
+### Capacites de detection
 
-### Interface Web
+**Detection vulnerabilites WordPress** couverte :
+recon DNS/WAF/SSL/CT-logs, enumeration plugins/themes/users/REST/XML-RPC/GraphQL, **scanner CVE WordPress** (plugins + core + infra + CISA KEV), DAST (XSS, SQLi, CSRF, SSRF, LFI, XXE, file upload, IDOR, open redirect), checks d'exposition (backup, debug log, Adminer, info.php, Search-Replace-DB, panneaux Redis/Memcached), exploit-class (XML-RPC bruteforce, password spray, Git dumper, API key extraction), infrastructure (network scan, SSL cert enum, vhost, service detect).
 
-```bash
-python run_gui.py
-# ouvre http://localhost:8666
+### Projets associes
+
+- [`wordpress-vulnerable-lab`](https://github.com/ayinedjimi/wordpress-vulnerable-lab) &mdash; le lab DVWP-etendu utilise pour les benchmarks
+- Guides de durcissement WordPress sur [ayinedjimi-consultants.fr](https://ayinedjimi-consultants.fr) &mdash; le pendant defensif de cet outil offensif
+
+---
+
+## Contributing
+
+Pull requests welcome. To add a new check: drop a Python file in `modules/<phase>/` that subclasses `core.base.BaseModule` and implements `run(target, session) -> list[Finding]`. The engine auto-discovers it on next launch &mdash; no registration needed.
+
+```python
+from core.base import BaseModule
+from core.models import Finding, Severity
+
+class MyCheck(BaseModule):
+    name = "my_check"
+    phase = "vuln"
+    def run(self, target, session):
+        # ... your logic ...
+        return [Finding(title="...", severity=Severity.HIGH, cwe="CWE-79")]
 ```
 
-### Benchmark vs WPScan / Nuclei
+## License
 
-| Métrique | BAZOOKA aggressive | WPScan (free) | Nuclei |
-|---|---|---|---|
-| Plugins légitimes détectés | 14 | 12 (15 - 3 FP) | 0 |
-| Utilisateurs détectés | ✅ | ❌ | n/a |
-| CVE plugins matchés | ✅ 3 (live wpvulnerability.net) | ❌ 0 (token requis) | 0 |
-| Durée | **2 min 25s** | 96 min | 30 s (mais 0 finding) |
-| Requêtes | 1 129 | 153 078 | ~ |
-| Faux positifs | 0 | 3 | n/a |
+MIT &mdash; see [LICENSE](LICENSE). Use responsibly.
 
-### Lab de test
+## Author
 
-Le repo **[wordpress-vulnerable-lab](https://github.com/AYI-NEDJIMI/wordpress-vulnerable-lab)** (séparé) fournit un environnement Docker WordPress volontairement vulnérable avec **30+ plugins** CVE 2023-2025 préinstallés pour benchmarker des scanners. Ground truth documentée, idéal pour formation, CTF et benchmark de scanner.
+**Ayi NEDJIMI** &mdash; security consultant, WordPress hardening specialist.
+Website: [ayinedjimi-consultants.fr](https://ayinedjimi-consultants.fr)
+Repository: [github.com/ayinedjimi/wordpress-bazooka](https://github.com/ayinedjimi/wordpress-bazooka)
 
-### Ressources complémentaires
-
-Guides et ressources WordPress security : **[ayinedjimi-consultants.fr](https://ayinedjimi-consultants.fr)**
-
-- Guide de sécurisation WordPress
-- Checklist de durcissement
-- Audit & conseil sécurité WordPress
-
-### Licence
-
-MIT. Par [Ayi NEDJIMI](https://ayinedjimi-consultants.fr).
+> If WordPress BAZOOKA saved you hours on an audit, a GitHub star is the cheapest way to say thanks.

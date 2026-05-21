@@ -76,15 +76,21 @@ def scan(
     console.print(BANNER)
 
     # Tor bootstrap (overrides --proxy if both provided)
-    _tor_proc = None
+    _tor_proc: Optional["object"] = None
     if tor:
         from core.tor_proxy import TorProcess
         console.print("  [magenta]Tor:[/magenta] starting embedded SOCKS5 proxy...")
-        _tor_proc = TorProcess()
         try:
+            _tor_proc = TorProcess()
             _tor_proc.start(ready_timeout=90)
         except Exception as e:
             console.print(f"  [red]Tor failed to start:[/red] {e}")
+            if _tor_proc is not None:
+                try:
+                    _tor_proc.stop()
+                except Exception:
+                    pass
+                _tor_proc = None
             raise typer.Exit(2)
         proxy = _tor_proc.proxy_url
         console.print(f"  [green]Tor ready:[/green] {proxy} "
