@@ -1,0 +1,19 @@
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress
+
+# CORS wildcard (intentional vulnerability for BAZOOKA testing)
+<IfModule mod_headers.c>
+    SetEnvIf Origin "^(.*)$" ORIGIN=$0
+    Header always set Access-Control-Allow-Origin "%{ORIGIN}e" env=ORIGIN
+    Header always set Access-Control-Allow-Credentials "true"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Authorization, X-WP-Nonce, Content-Type"
+</IfModule>

@@ -1,0 +1,58 @@
+##############################################
+# WordPress BAZOOKA — Vulnerable Test Lab
+#
+# Usage (from WSL):
+#   cd /mnt/c/WORDPRESSBAZOOKA/testlab
+#   docker compose up -d
+#   # Wait 30s then run: bash setup-after.sh
+#
+# WordPress: http://localhost:8888
+# phpMyAdmin: http://localhost:8889
+##############################################
+
+services:
+  db:
+    image: mysql:5.7
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123
+      MYSQL_DATABASE: wp_vulntest
+      MYSQL_USER: wp_admin
+      MYSQL_PASSWORD: S3cretDB_Pass!
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "13306:3306"
+
+  wordpress:
+    image: wordpress:6.4-php8.1-apache
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "8888:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wp_admin
+      WORDPRESS_DB_PASSWORD: S3cretDB_Pass!
+      WORDPRESS_DB_NAME: wp_vulntest
+      WORDPRESS_TABLE_PREFIX: wp_
+      WORDPRESS_DEBUG: "1"
+    volumes:
+      - wp_data:/var/www/html
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "8889:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: rootpass123
+
+volumes:
+  db_data:
+  wp_data:

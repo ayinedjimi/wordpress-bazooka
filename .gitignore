@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Venv
+.venv/
+venv/
+env/
+
+# Scan output (local)
+loot/
+
+# Runtime CVE cache (regenerated on first scan)
+cve_db/wpvuln_cache.json
+
+# Local test files
+*.log
+testlab/vuln-config/debug.log
+testlab/vuln-config/.env
+
+# Build artifacts
+*.spec
+release/
+
+# Third-party scanner clones (used only for benchmark comparison locally)
+vane/
+vane2/
+wordpresscan/
+wpyscan/
+wpseku/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

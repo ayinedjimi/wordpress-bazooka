@@ -1,0 +1,15 @@
+# Format: path|description|severity|signatures (signatures separated by ;;)
+# Severity: CRITICAL, HIGH, MEDIUM, LOW
+/search-replace-db/|Search-Replace-DB tool exposed|CRITICAL|Search Replace DB;;interconnect/it;;search-replace-db
+/Search-Replace-DB-master/|Search-Replace-DB tool exposed|CRITICAL|Search Replace DB;;interconnect/it
+/search-replace-db.php|Search-Replace-DB tool exposed|CRITICAL|Search Replace DB
+/srdb.php|Search-Replace-DB tool exposed|CRITICAL|Search Replace DB
+/wp-content/uploads/search-replace-db/|Search-Replace-DB in uploads|CRITICAL|Search Replace DB
+/db/search-replace-db.php|Search-Replace-DB tool exposed|CRITICAL|Search Replace DB
+/tools/srdb.php|Search-Replace-DB tool exposed|CRITICAL|Search Replace DB
+/srdb/|Search-Replace-DB tool exposed|CRITICAL|Search Replace DB
+/info.php|PHP info page exposed|HIGH|phpinfo();;PHP Version;;Configuration File
+/test.php|Test PHP file|MEDIUM|<?php;;phpinfo
+/i.php|PHP info short name|HIGH|phpinfo();;PHP Version
+/wp-content/uploads/dump.sql|SQL dump in uploads|CRITICAL|INSERT INTO;;-- MySQL;;-- phpMyAdmin
+/wp-content/plugins/akismet/_inc/|Akismet plugin internals|LOW|Index of

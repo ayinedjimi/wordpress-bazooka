@@ -1,0 +1,1 @@
+"""WordPress BAZOOKA - Core framework."""
