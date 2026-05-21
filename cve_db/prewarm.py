@@ -67,14 +67,41 @@ async def _fetch_json(client: httpx.AsyncClient, url: str, timeout: float = 20.0
     return None
 
 
-async def _fetch_wpvuln(client: httpx.AsyncClient, kind: str, ident: str) -> list:
-    url = f"{WPV_BASE}/{kind}/{ident}/"
-    data = await _fetch_json(client, url)
-    if not isinstance(data, dict) or data.get("error"):
+def _slug_variants(slug: str) -> list[str]:
+    s = (slug or "").lower().strip()
+    if not s:
         return []
-    payload = data.get("data") or {}
-    if isinstance(payload, dict):
-        return payload.get("vulnerability") or []
+    out = [s]
+    if "_" in s:
+        out.append(s.replace("_", "-"))
+    for suf in ("-pro", "-lite", "-free", "-premium"):
+        if s.endswith(suf):
+            base = s[: -len(suf)]
+            if base:
+                out.append(base)
+                out.append(base.replace("_", "-"))
+    if s.startswith("wp-"):
+        out.append(s[3:])
+    seen, final = set(), []
+    for v in out:
+        if v and v not in seen:
+            seen.add(v); final.append(v)
+    return final
+
+
+async def _fetch_wpvuln(client: httpx.AsyncClient, kind: str, ident: str) -> list:
+    # For plugins/themes try canonical slug variants; for versions just one shot.
+    candidates = _slug_variants(ident) if kind in ("plugin", "theme") else [ident]
+    for cand in candidates:
+        url = f"{WPV_BASE}/{kind}/{cand}/"
+        data = await _fetch_json(client, url)
+        if not isinstance(data, dict) or data.get("error"):
+            continue
+        payload = data.get("data") or {}
+        if isinstance(payload, dict):
+            vulns = payload.get("vulnerability") or []
+            if vulns:
+                return vulns
     return []
 
 

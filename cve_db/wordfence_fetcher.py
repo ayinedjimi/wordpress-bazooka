@@ -198,7 +198,74 @@ def _normalize(vuln: dict, slug: str) -> dict:
     }
 
 
+def _slug_variants(slug: str) -> list[str]:
+    """Generate canonical slug variants tried in order on wpvulnerability.net.
+
+    Examples:
+      js_composer   -> js_composer, js-composer
+      wp-counter-up-pro -> wp-counter-up-pro, wp-counter-up, counter-up-pro,
+                          counter-up
+      contact-form-7-lite -> contact-form-7-lite, contact-form-7
+    """
+    s = (slug or "").lower().strip()
+    if not s:
+        return []
+    out: list[str] = [s]
+    # underscore <-> hyphen
+    if "_" in s:
+        out.append(s.replace("_", "-"))
+    if "-" in s:
+        out.append(s.replace("-", "_"))
+    # strip common suffixes
+    for suf in ("-pro", "-lite", "-free", "-premium"):
+        if s.endswith(suf):
+            base = s[: -len(suf)]
+            if base and base not in out:
+                out.append(base)
+            base_hy = base.replace("_", "-")
+            if base_hy not in out:
+                out.append(base_hy)
+    # also try wp- prefix stripped (sometimes wpvuln uses bare slug)
+    if s.startswith("wp-"):
+        bare = s[3:]
+        if bare not in out:
+            out.append(bare)
+    # dedupe preserving order
+    seen: set[str] = set()
+    final: list[str] = []
+    for v in out:
+        if v and v not in seen:
+            seen.add(v)
+            final.append(v)
+    return final
+
+
 async def _fetch_one(slug: str, is_theme: bool = False) -> list[dict]:
+    """Fetch CVE for a slug, trying canonical variants until one returns data."""
+    base_tmpl = WPV_THEME_URL if is_theme else WPV_URL
+    async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
+        for variant in _slug_variants(slug):
+            try:
+                resp = await client.get(
+                    base_tmpl.format(slug=variant),
+                    headers={"User-Agent": "wordpress-bazooka/0.1"},
+                )
+                if resp.status_code != 200:
+                    continue
+                data = resp.json()
+            except Exception:
+                continue
+            if isinstance(data, dict) and not data.get("error"):
+                payload = data.get("data") or {}
+                if isinstance(payload, dict):
+                    vulns = payload.get("vulnerability") or []
+                    if vulns:
+                        return vulns
+    return []
+
+
+async def _fetch_one_legacy(slug: str, is_theme: bool = False) -> list[dict]:
+    """Old single-URL fetch — kept for reference, not used."""
     url = (WPV_THEME_URL if is_theme else WPV_URL).format(slug=slug)
     try:
         async with httpx.AsyncClient(timeout=15.0, verify=False) as client:

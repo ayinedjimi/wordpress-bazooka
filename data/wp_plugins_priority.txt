@@ -232,6 +232,16 @@ oxygen
 brizy
 visualcomposer
 js_composer
+js-composer
+visualcomposer
+wpbakery-page-builder
+wp-counter-up
+counter-up
+counter-up-pro
+post-grid-and-filter-ultimate
+the-post-grid
+post-grid
+kleo
 classic-widgets
 
 # Multilingual
