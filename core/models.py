@@ -131,6 +131,7 @@ class Target(BaseModel):
     cdn_detected: bool = False
     waf_detected: Optional[str] = None
     wp_version: Optional[str] = None
+    wp_version_fingerprinted: Optional[str] = None
     wp_content_path: str = "/wp-content/"
     users: list[WPUser] = Field(default_factory=list)
     plugins: list[WPPlugin] = Field(default_factory=list)

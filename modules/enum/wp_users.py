@@ -1,4 +1,4 @@
-"""WordPress user enumeration — 4 vectors: REST, author-id, oEmbed, sitemap."""
+"""WordPress user enumeration — 7 vectors: REST, author-id, oEmbed, sitemap, Yoast sitemap, RSS, login errors."""
 
 from __future__ import annotations
 
@@ -68,14 +68,20 @@ class WPUsersModule(BazookaModule):
                 discovery_method=source,
             )
 
-        # Run 4 vectors concurrently
-        await asyncio.gather(
+        # Run vectors concurrently
+        vectors = [
             self._vector_rest(base, session, add, ctx),
             self._vector_author_id(base, session, add, ctx),
             self._vector_oembed(base, session, add),
             self._vector_sitemap(base, session, add),
-            return_exceptions=True,
-        )
+            self._vector_yoast_sitemap(base, session, add),
+            self._vector_rss_creator(base, session, add),
+        ]
+        await asyncio.gather(*vectors, return_exceptions=True)
+
+        # Login error message enum runs after — needs known candidate usernames
+        if ctx.profile in ("aggressive", "bugbounty"):
+            await self._vector_login_error_messages(base, session, add, users)
 
         user_list = list(users.values())
         ctx.target.users = user_list
@@ -224,3 +230,100 @@ class WPUsersModule(BazookaModule):
         if resp.status_code == 200 and "<loc>" in (resp.text or ""):
             for slug in AUTHOR_URL_RE.findall(resp.text):
                 add(slug, source="sitemap_users")
+
+    async def _vector_yoast_sitemap(self, base: str, session, add) -> None:
+        """Yoast SEO author sitemap (and sitemap_index) — parses /author/<slug>/ from <loc>."""
+        urls = [f"{base}/author-sitemap.xml", f"{base}/sitemap_index.xml"]
+        for url in urls:
+            try:
+                resp = await session.get(url)
+            except Exception:
+                continue
+            if resp.status_code != 200:
+                continue
+            body = resp.text or ""
+            if "<loc>" not in body:
+                continue
+            # Extract every <loc>...</loc>, then look for /author/<slug>/
+            for loc in re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", body, flags=re.IGNORECASE):
+                m = AUTHOR_URL_RE.search(loc)
+                if m:
+                    add(m.group(1), source="yoast_sitemap")
+
+    async def _vector_rss_creator(self, base: str, session, add) -> None:
+        """RSS feed <dc:creator> nodes — display names, LIKELY confidence."""
+        urls = [f"{base}/feed/", f"{base}/feed/rss/", f"{base}/?feed=rss2"]
+        for url in urls:
+            try:
+                resp = await session.get(url)
+            except Exception:
+                continue
+            if resp.status_code != 200:
+                continue
+            body = resp.text or ""
+            if "<dc:creator" not in body:
+                continue
+            # <dc:creator><![CDATA[name]]></dc:creator> or <dc:creator>name</dc:creator>
+            for raw in re.findall(
+                r"<dc:creator[^>]*>\s*(?:<!\[CDATA\[)?([^<\]]+?)(?:\]\]>)?\s*</dc:creator>",
+                body, flags=re.IGNORECASE,
+            ):
+                name = raw.strip()
+                if not name or len(name) > 60:
+                    continue
+                # ASCII-only check (slugs are ASCII; display names with unicode are noise)
+                try:
+                    name.encode("ascii")
+                except UnicodeEncodeError:
+                    continue
+                add(name, source="rss_creator", display_name=name)
+
+    async def _vector_login_error_messages(
+        self, base: str, session, add, users: dict,
+    ) -> None:
+        """Active login error message probing — aggressive/bugbounty only.
+
+        WordPress responds with distinct messages depending on whether the
+        username exists. Limited to 30 candidates and rate-limited 0.5s.
+        """
+        candidates: list[str] = []
+        # Re-probe already-known usernames first (high signal: confirms slug)
+        for key in users:
+            if key and key not in candidates:
+                candidates.append(key)
+        # Then add common defaults
+        defaults = [
+            "admin", "administrator", "root", "user", "test", "demo",
+            "wpadmin", "wp-admin", "manager", "support", "info", "contact",
+            "editor", "author", "guest", "webmaster", "operator",
+        ]
+        for d in defaults:
+            if d not in candidates:
+                candidates.append(d)
+        candidates = candidates[:30]
+
+        login_url = f"{base}/wp-login.php"
+        for username in candidates:
+            try:
+                resp = await session.post(
+                    login_url,
+                    data={
+                        "log": username,
+                        "pwd": "bazooka-invalid-password-probe-xyz",
+                        "wp-submit": "Log In",
+                        "redirect_to": base,
+                        "testcookie": "1",
+                    },
+                    follow_redirects=False,
+                )
+            except Exception:
+                await asyncio.sleep(0.5)
+                continue
+            body = (resp.text or "").lower()
+            # Positive match: WP confirms the username exists
+            if ("the password you entered for the username" in body
+                    or "the password you entered for the email" in body
+                    or "incorrect_password" in body):
+                add(username, source="login_error_messages")
+            # "Unknown username" / generic = does not exist; ignore.
+            await asyncio.sleep(0.5)

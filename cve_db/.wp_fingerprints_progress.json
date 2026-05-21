@@ -1,0 +1,303 @@
+{
+  "versions": {
+    "4.0": {
+      "wp-admin/css/colors/blue/colors.min.css": "bff3966d07076edaf48befe021c4112b",
+      "wp-admin/css/wp-admin.min.css": "fceeca9707faf124a462d8e11a9bfb50"
+    },
+    "4.1": {
+      "wp-admin/css/colors/blue/colors.min.css": "09ba9aa3753dfc6aaa747e46172d7f0c",
+      "wp-admin/css/wp-admin.min.css": "2984023919bf18888432e7459d70bf00"
+    },
+    "4.3": {
+      "wp-includes/js/wp-emoji-release.min.js": "1c64b125732c6fe54928ee058ea72595",
+      "wp-admin/css/colors/blue/colors.min.css": "b05bd2b90583cd670ef66e4fbd08c12e",
+      "wp-admin/css/wp-admin.min.css": "19084332c355439f6d42ebc0f0e78ebd"
+    },
+    "4.4": {
+      "wp-includes/js/wp-embed.min.js": "2fb8dee3969a7597d0d892028e01cc2e",
+      "wp-includes/js/wp-emoji-release.min.js": "1601e8da361dc8f86caa5afe88e37f5c",
+      "wp-admin/css/colors/blue/colors.min.css": "dd77d909ddd0981a03cd1bcb90d2a56a",
+      "wp-admin/css/wp-admin.min.css": "1ac33574bd35da1e4cf9e66d2d173686"
+    },
+    "4.5": {
+      "wp-includes/js/wp-embed.min.js": "0203f8b4d98102d02f6a569c40a47d7b",
+      "wp-includes/js/wp-emoji-release.min.js": "f3789112e7c443dc1d661159005af3e4",
+      "wp-admin/css/colors/blue/colors.min.css": "fb4d3e2f7fe955aea70becac4602f87f",
+      "wp-admin/css/wp-admin.min.css": "a2e2f67626ed6f9beca5306c1a16abba"
+    },
+    "4.7": {
+      "wp-includes/js/wp-embed.min.js": "5a03f97cc479b9f5d7efdaccec31bc17",
+      "wp-includes/js/wp-emoji-release.min.js": "cb6284b70da03a43468244be7eafa362",
+      "wp-admin/css/colors/blue/colors.min.css": "835228f437b76cb4336fd2db1841a984",
+      "wp-admin/css/wp-admin.min.css": "a2e2f67626ed6f9beca5306c1a16abba"
+    },
+    "4.7.33": {
+      "wp-includes/js/wp-embed.min.js": "d5d85ee759b972a53a93a8fb686d48c3",
+      "wp-includes/js/wp-emoji-release.min.js": "dbb9840631ffd428143c1f80032ad6d9",
+      "wp-admin/css/colors/blue/colors.min.css": "4c1d27870bd4365ab320c1f356923b51",
+      "wp-admin/css/wp-admin.min.css": "a2e2f67626ed6f9beca5306c1a16abba"
+    },
+    "4.8": {
+      "wp-includes/js/wp-embed.min.js": "5a03f97cc479b9f5d7efdaccec31bc17",
+      "wp-includes/js/wp-emoji-release.min.js": "8b90a6e26cce1c0a39bfa8b7e0fe909e",
+      "wp-admin/css/colors/blue/colors.min.css": "835228f437b76cb4336fd2db1841a984",
+      "wp-admin/css/wp-admin.min.css": "a2e2f67626ed6f9beca5306c1a16abba"
+    },
+    "4.8.28": {
+      "wp-includes/js/wp-embed.min.js": "d5d85ee759b972a53a93a8fb686d48c3",
+      "wp-includes/js/wp-emoji-release.min.js": "2d10e5e48acce801677c2cf9dd3a8641",
+      "wp-admin/css/colors/blue/colors.min.css": "4c1d27870bd4365ab320c1f356923b51",
+      "wp-admin/css/wp-admin.min.css": "a2e2f67626ed6f9beca5306c1a16abba"
+    },
+    "4.9": {
+      "wp-includes/js/wp-embed.min.js": "5a03f97cc479b9f5d7efdaccec31bc17",
+      "wp-includes/js/wp-emoji-release.min.js": "af2f44df3198cfda9fd515873696ad00",
+      "wp-admin/css/colors/blue/colors.min.css": "58b52e0c8528d52e040b8355a02eee77",
+      "wp-admin/css/wp-admin.min.css": "2bcbab07977867b916887573559917fe"
+    },
+    "4.9.29": {
+      "wp-includes/js/wp-embed.min.js": "43928880ff5ebadcd513755b011732cd",
+      "wp-includes/js/wp-emoji-release.min.js": "fe0575b66568074463f12485d90f6d4c",
+      "wp-admin/css/colors/blue/colors.min.css": "9871ee227143cdee76b565c2ce1c23f5",
+      "wp-admin/css/wp-admin.min.css": "2bcbab07977867b916887573559917fe"
+    },
+    "5.0": {
+      "wp-includes/js/wp-embed.min.js": "2dce40d16f9ff6332d3cbb7ae488a2b9",
+      "wp-includes/js/wp-emoji-release.min.js": "15d0c302dc74fd87bd9cfeab513e13e4",
+      "wp-includes/css/dist/block-library/style.min.css": "b9d4015ad4738655273de5ab3738e09e",
+      "wp-admin/css/colors/blue/colors.min.css": "9871ee227143cdee76b565c2ce1c23f5",
+      "wp-admin/css/wp-admin.min.css": "2bcbab07977867b916887573559917fe"
+    },
+    "5.0.25": {
+      "wp-includes/js/wp-embed.min.js": "43928880ff5ebadcd513755b011732cd",
+      "wp-includes/js/wp-emoji-release.min.js": "fe0575b66568074463f12485d90f6d4c",
+      "wp-includes/css/dist/block-library/style.min.css": "eb1a96949e0ea0d08033d3f941bf1f3e",
+      "wp-admin/css/colors/blue/colors.min.css": "9871ee227143cdee76b565c2ce1c23f5",
+      "wp-admin/css/wp-admin.min.css": "2bcbab07977867b916887573559917fe"
+    },
+    "5.1": {
+      "wp-includes/js/wp-embed.min.js": "2dce40d16f9ff6332d3cbb7ae488a2b9",
+      "wp-includes/js/wp-emoji-release.min.js": "c17b309d8ab4b4e9653876d3c35c397d",
+      "wp-includes/css/dist/block-library/style.min.css": "7a63f6bcae054a13315b6bf1d32dbcd4",
+      "wp-admin/css/colors/blue/colors.min.css": "476bd860a10099a51548fabfd11ac23a",
+      "wp-admin/css/wp-admin.min.css": "2bcbab07977867b916887573559917fe"
+    },
+    "5.1.22": {
+      "wp-includes/js/wp-embed.min.js": "43928880ff5ebadcd513755b011732cd",
+      "wp-includes/js/wp-emoji-release.min.js": "33479c6b333bb34fd771bf50df1fefc3",
+      "wp-includes/css/dist/block-library/style.min.css": "d0b8525a9eff4173fd149a06f341e531",
+      "wp-admin/css/colors/blue/colors.min.css": "476bd860a10099a51548fabfd11ac23a",
+      "wp-admin/css/wp-admin.min.css": "2bcbab07977867b916887573559917fe"
+    },
+    "5.2": {
+      "wp-includes/js/wp-embed.min.js": "2dce40d16f9ff6332d3cbb7ae488a2b9",
+      "wp-includes/js/wp-emoji-release.min.js": "fd997843190935059fe09163ecf229a5",
+      "wp-includes/css/dist/block-library/style.min.css": "375bd65d60ff3c8723fccc343afb1b9b",
+      "wp-admin/css/colors/blue/colors.min.css": "f76dbe0a0a5fb610dd13cce233ed9108",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.2.24": {
+      "wp-includes/js/wp-embed.min.js": "43928880ff5ebadcd513755b011732cd",
+      "wp-includes/js/wp-emoji-release.min.js": "b109ec410cb993d4697ab9c326e0fb53",
+      "wp-includes/css/dist/block-library/style.min.css": "80abe0410c6640e58fc1e18516c6602f",
+      "wp-admin/css/colors/blue/colors.min.css": "f76dbe0a0a5fb610dd13cce233ed9108",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.3": {
+      "wp-includes/js/wp-embed.min.js": "04133d37cfd0f08267530b905a5ffff3",
+      "wp-includes/js/wp-emoji-release.min.js": "b2bdc6d8dfd107ed138f042d71ad4be2",
+      "wp-includes/css/dist/block-library/style.min.css": "9eeddc51b0b4a2580a959042d50f826e",
+      "wp-admin/css/colors/blue/colors.min.css": "e99f9ad98677585817cb3ed25b652b58",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.3.21": {
+      "wp-includes/js/wp-embed.min.js": "43928880ff5ebadcd513755b011732cd",
+      "wp-includes/js/wp-emoji-release.min.js": "d6aeffd9e0126160ff89d369c05a5fbe",
+      "wp-includes/css/dist/block-library/style.min.css": "612b7ab9f699e968f5b3206ca16ee834",
+      "wp-admin/css/colors/blue/colors.min.css": "0fdb09604123207db1d16f6cad040be6",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.4.19": {
+      "wp-includes/js/wp-embed.min.js": "7c5c36baa69fcdb57bd891cda90920b3",
+      "wp-includes/js/wp-emoji-release.min.js": "c8d5a4cd14632bc2bdf15b5e45ca9d4d",
+      "wp-includes/css/dist/block-library/style.min.css": "7d2051e6c59f3598b17877bf41637ec4",
+      "wp-admin/css/colors/blue/colors.min.css": "0fdb09604123207db1d16f6cad040be6",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.5": {
+      "wp-includes/js/wp-embed.min.js": "8ed6038a5dbf62380de72a681340afd3",
+      "wp-includes/js/wp-emoji-release.min.js": "8b9f36f8ca91dda15909c08299ddf4ad",
+      "wp-includes/css/dist/block-library/style.min.css": "4c48b7dd10596a40acb74090e2230cbb",
+      "wp-admin/css/colors/blue/colors.min.css": "3584a97822fec470bd8afd83efdd3d56",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.6": {
+      "wp-includes/js/wp-embed.min.js": "8ed6038a5dbf62380de72a681340afd3",
+      "wp-includes/js/wp-emoji-release.min.js": "c748456e1cf97f3303ee25c838b1ad76",
+      "wp-includes/css/dist/block-library/style.min.css": "27f5295ccf3ad9e0e85dcac543630288",
+      "wp-admin/css/colors/blue/colors.min.css": "3584a97822fec470bd8afd83efdd3d56",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.6.17": {
+      "wp-includes/js/wp-embed.min.js": "7c5c36baa69fcdb57bd891cda90920b3",
+      "wp-includes/js/wp-emoji-release.min.js": "eaa8641bcda2371f4024a71fbb67de3b",
+      "wp-includes/css/dist/block-library/style.min.css": "5d888445cd09ad35891ac468cd8b04cb",
+      "wp-admin/css/colors/blue/colors.min.css": "51e2d43622254c747d5645518ad4b3d6",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.7": {
+      "wp-includes/js/wp-embed.min.js": "905225d5711b559d3092387d5ffbedbd",
+      "wp-includes/js/wp-emoji-release.min.js": "eaa8641bcda2371f4024a71fbb67de3b",
+      "wp-includes/css/dist/block-library/style.min.css": "eff184983dcabae2782a112fd2bdcb37",
+      "wp-admin/css/colors/blue/colors.min.css": "56e5bd05fb72f0bb75db21cd6f8786da",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.7.15": {
+      "wp-includes/js/wp-embed.min.js": "7c5c36baa69fcdb57bd891cda90920b3",
+      "wp-includes/js/wp-emoji-release.min.js": "eaa8641bcda2371f4024a71fbb67de3b",
+      "wp-includes/css/dist/block-library/style.min.css": "b5d1e2c87b60ce71c3fd90ca27073250",
+      "wp-admin/css/colors/blue/colors.min.css": "030e6205711ce0398b8fff0a67498a2b",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.8": {
+      "wp-includes/js/wp-embed.min.js": "905225d5711b559d3092387d5ffbedbd",
+      "wp-includes/js/wp-emoji-release.min.js": "116c86c56f8db0bb63f15ceda50fdc98",
+      "wp-includes/css/dist/block-library/style.min.css": "43c4bc05b5e3b0a6684a7c3a52e63590",
+      "wp-admin/css/colors/blue/colors.min.css": "8ccb6eedbfbd0d8997f2ad3ab28c2de0",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.8.13": {
+      "wp-includes/js/wp-embed.min.js": "7c5c36baa69fcdb57bd891cda90920b3",
+      "wp-includes/js/wp-emoji-release.min.js": "116c86c56f8db0bb63f15ceda50fdc98",
+      "wp-includes/css/dist/block-library/style.min.css": "43c4bc05b5e3b0a6684a7c3a52e63590",
+      "wp-admin/css/colors/blue/colors.min.css": "8ccb6eedbfbd0d8997f2ad3ab28c2de0",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.9": {
+      "wp-includes/js/wp-embed.min.js": "2213f2eec8faff7086aa22f304c35fe0",
+      "wp-includes/js/wp-emoji-release.min.js": "116c86c56f8db0bb63f15ceda50fdc98",
+      "wp-includes/css/dist/block-library/style.min.css": "2dd1ffbe069ac537b7e471877bf16c32",
+      "wp-admin/css/colors/blue/colors.min.css": "319e7ee7325e65c2988ad444e6f5757c",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "5.9.13": {
+      "wp-includes/js/wp-embed.min.js": "66b3a15ec6f78bae407fa735fac0ab8c",
+      "wp-includes/js/wp-emoji-release.min.js": "116c86c56f8db0bb63f15ceda50fdc98",
+      "wp-includes/css/dist/block-library/style.min.css": "7e7a1a9e3712cd16dade7c6e811ba28b",
+      "wp-admin/css/colors/blue/colors.min.css": "319e7ee7325e65c2988ad444e6f5757c",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.0": {
+      "wp-includes/js/wp-embed.min.js": "3b488bf1c6371af562e304bd37753145",
+      "wp-includes/js/wp-emoji-release.min.js": "32beb68a374e3aeac00abdf9e12b84ea",
+      "wp-includes/css/dist/block-library/style.min.css": "d534fc4463d84fecc2a0b4e847bec46e",
+      "wp-admin/css/colors/blue/colors.min.css": "0fe0d3d0f85b47e102b53f8a35d6ca74",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.0.12": {
+      "wp-includes/js/wp-embed.min.js": "6c2025cf2c3282b1021c6105109be7dc",
+      "wp-includes/js/wp-emoji-release.min.js": "32beb68a374e3aeac00abdf9e12b84ea",
+      "wp-includes/css/dist/block-library/style.min.css": "b7915926fe42d76e9c802353ab01dae4",
+      "wp-admin/css/colors/blue/colors.min.css": "0fe0d3d0f85b47e102b53f8a35d6ca74",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.1": {
+      "wp-includes/js/wp-embed.min.js": "3b488bf1c6371af562e304bd37753145",
+      "wp-includes/js/wp-emoji-release.min.js": "32beb68a374e3aeac00abdf9e12b84ea",
+      "wp-includes/css/dist/block-library/style.min.css": "4cdcd4a2c77fccb74825eaf2d6733091",
+      "wp-admin/css/colors/blue/colors.min.css": "ea7722c09f3902ddcf45ae95d995e6dc",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.1.10": {
+      "wp-includes/js/wp-embed.min.js": "6c2025cf2c3282b1021c6105109be7dc",
+      "wp-includes/js/wp-emoji-release.min.js": "32beb68a374e3aeac00abdf9e12b84ea",
+      "wp-includes/css/dist/block-library/style.min.css": "eae67119698a4c352712dd5c50e64c50",
+      "wp-admin/css/colors/blue/colors.min.css": "ea7722c09f3902ddcf45ae95d995e6dc",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.2": {
+      "wp-includes/js/wp-embed.min.js": "3b488bf1c6371af562e304bd37753145",
+      "wp-includes/js/wp-emoji-release.min.js": "4cc444663c1e69cb8ac7b909e7192bca",
+      "wp-includes/css/dist/block-library/style.min.css": "47cdb0e81ea341ad27a1a0b0ba6b02d8",
+      "wp-admin/css/colors/blue/colors.min.css": "87ccd0838a7fc7d21d405174d699783f",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.2.9": {
+      "wp-includes/js/wp-embed.min.js": "6c2025cf2c3282b1021c6105109be7dc",
+      "wp-includes/js/wp-emoji-release.min.js": "4cc444663c1e69cb8ac7b909e7192bca",
+      "wp-includes/css/dist/block-library/style.min.css": "47cdb0e81ea341ad27a1a0b0ba6b02d8",
+      "wp-admin/css/colors/blue/colors.min.css": "87ccd0838a7fc7d21d405174d699783f",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.3": {
+      "wp-includes/js/wp-embed.min.js": "6c2025cf2c3282b1021c6105109be7dc",
+      "wp-includes/js/wp-emoji-release.min.js": "4cc444663c1e69cb8ac7b909e7192bca",
+      "wp-includes/css/dist/block-library/style.min.css": "03c0f2128c8dd615b1691c168f1d4456",
+      "wp-admin/css/colors/blue/colors.min.css": "f9ce3e0fbe35db593e04071e1b72ea20",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.3.8": {
+      "wp-includes/js/wp-embed.min.js": "6c2025cf2c3282b1021c6105109be7dc",
+      "wp-includes/js/wp-emoji-release.min.js": "4cc444663c1e69cb8ac7b909e7192bca",
+      "wp-includes/css/dist/block-library/style.min.css": "03c0f2128c8dd615b1691c168f1d4456",
+      "wp-admin/css/colors/blue/colors.min.css": "f9ce3e0fbe35db593e04071e1b72ea20",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.4": {
+      "wp-includes/js/wp-embed.min.js": "2f9c93eca3f761e9a87c735cf3a24a39",
+      "wp-includes/js/wp-emoji-release.min.js": "4cc444663c1e69cb8ac7b909e7192bca",
+      "wp-includes/css/dist/block-library/style.min.css": "99ab466e0866c823ae5db517d59cebd1",
+      "wp-admin/css/colors/blue/colors.min.css": "f9ce3e0fbe35db593e04071e1b72ea20",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.4.8": {
+      "wp-includes/js/wp-embed.min.js": "2f9c93eca3f761e9a87c735cf3a24a39",
+      "wp-includes/js/wp-emoji-release.min.js": "4cc444663c1e69cb8ac7b909e7192bca",
+      "wp-includes/css/dist/block-library/style.min.css": "0234d0a7685aefa6fd06041fbd602928",
+      "wp-admin/css/colors/blue/colors.min.css": "f9ce3e0fbe35db593e04071e1b72ea20",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.5": {
+      "wp-includes/js/wp-embed.min.js": "2f9c93eca3f761e9a87c735cf3a24a39",
+      "wp-includes/js/wp-emoji-release.min.js": "b976b651932bfd25b9ddb5b7693d88a7",
+      "wp-includes/css/dist/block-library/style.min.css": "51a8390b47aa0582cf2d9c96c5addee2",
+      "wp-admin/css/colors/blue/colors.min.css": "f9ce3e0fbe35db593e04071e1b72ea20",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.5.8": {
+      "wp-includes/js/wp-embed.min.js": "2f9c93eca3f761e9a87c735cf3a24a39",
+      "wp-includes/js/wp-emoji-release.min.js": "b976b651932bfd25b9ddb5b7693d88a7",
+      "wp-includes/css/dist/block-library/style.min.css": "51a8390b47aa0582cf2d9c96c5addee2",
+      "wp-admin/css/colors/blue/colors.min.css": "f9ce3e0fbe35db593e04071e1b72ea20",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.6": {
+      "wp-includes/js/wp-embed.min.js": "2f9c93eca3f761e9a87c735cf3a24a39",
+      "wp-includes/js/wp-emoji-release.min.js": "b976b651932bfd25b9ddb5b7693d88a7",
+      "wp-includes/css/dist/block-library/style.min.css": "ae2de433ff67a6b85a931a9f232a3ae8",
+      "wp-admin/css/colors/blue/colors.min.css": "f9ce3e0fbe35db593e04071e1b72ea20",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.7": {
+      "wp-includes/js/wp-embed.min.js": "2f9c93eca3f761e9a87c735cf3a24a39",
+      "wp-includes/js/wp-emoji-release.min.js": "b976b651932bfd25b9ddb5b7693d88a7",
+      "wp-includes/css/dist/block-library/style.min.css": "8c9f31823282e4e056eb0aa7fac262a9",
+      "wp-admin/css/colors/blue/colors.min.css": "e50d631872ec2891a915e3d68d5c8636",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.7.5": {
+      "wp-includes/js/wp-embed.min.js": "2f9c93eca3f761e9a87c735cf3a24a39",
+      "wp-includes/js/wp-emoji-release.min.js": "b976b651932bfd25b9ddb5b7693d88a7",
+      "wp-includes/css/dist/block-library/style.min.css": "8c9f31823282e4e056eb0aa7fac262a9",
+      "wp-admin/css/colors/blue/colors.min.css": "e50d631872ec2891a915e3d68d5c8636",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    },
+    "6.8": {
+      "wp-includes/js/wp-embed.min.js": "2f9c93eca3f761e9a87c735cf3a24a39",
+      "wp-includes/js/wp-emoji-release.min.js": "1dafa7fe14b33c26fef9b0e5ba0c8e72",
+      "wp-includes/css/dist/block-library/style.min.css": "dfe67cbbac3da53fdbbaed71c91db428",
+      "wp-admin/css/colors/blue/colors.min.css": "e50d631872ec2891a915e3d68d5c8636",
+      "wp-admin/css/wp-admin.min.css": "8065e85570ca93fb489a57745021a048"
+    }
+  }
+}

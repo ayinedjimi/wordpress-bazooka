@@ -78,6 +78,21 @@ class WPVersionModule(BazookaModule):
         if versions_found:
             version = versions_found[0][0]
             methods = [m for _, m in versions_found]
+
+            # Prefer the MD5-fingerprinted version if present and divergent;
+            # that detection is hash-based and far more reliable than meta tags.
+            fp_ver = getattr(ctx.target, "wp_version_fingerprinted", None)
+            if fp_ver and fp_ver != version:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "wp_version mismatch: regex=%s fingerprint=%s — using fingerprint",
+                    version, fp_ver,
+                )
+                version = fp_ver
+                methods = ["md5_fingerprint"] + methods
+            elif fp_ver:
+                methods = ["md5_fingerprint"] + methods
+
             ctx.target.wp_version = version
             result.add_data("wp_version", version)
             result.add_data("wp_version_methods", methods)

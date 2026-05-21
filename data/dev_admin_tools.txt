@@ -13,3 +13,10 @@
 /i.php|PHP info short name|HIGH|phpinfo();;PHP Version
 /wp-content/uploads/dump.sql|SQL dump in uploads|CRITICAL|INSERT INTO;;-- MySQL;;-- phpMyAdmin
 /wp-content/plugins/akismet/_inc/|Akismet plugin internals|LOW|Index of
+# --- Pack 2: WPScan-parity finders (Author: Ayi NEDJIMI <ayinedjimi@users.noreply.github.com>) ---
+/wp-includes/rss-functions.php|FullPathDisclosure via rss-functions.php|HIGH|/wp-includes/rss-functions.php;;rss-functions.php on line;;fatal error: uncaught
+/searchreplacedb2.php|SearchReplaceDB2 tool exposed|CRITICAL|by interconnect;;Search and Replace;;searchreplacedb2
+/installer-log.txt|Duplicator installer log exposed|CRITICAL|DUPLICATOR;;INSTALL-LOG;;DUPLICATOR INSTALL-LOG
+/wp-content/installer-log.txt|Duplicator installer log exposed (wp-content)|CRITICAL|DUPLICATOR;;INSTALL-LOG;;DUPLICATOR INSTALL-LOG
+/emergency.php|Emergency Password Reset Script exposed|CRITICAL|Emergency Password Reset;;Emergency Password;;emergency password reset script
+/fantastico_fileslist.txt|Fantastico fileslist exposed|HIGH|chmod;;<?php;;fantastico

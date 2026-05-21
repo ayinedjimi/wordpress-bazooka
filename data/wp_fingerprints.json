@@ -1,0 +1,84 @@
+{
+  "_meta": {
+    "ambiguous_discarded": 38,
+    "files": 5,
+    "generated_at": "2026-05-21T23:48:05.893859+00:00",
+    "hash": "md5",
+    "unique_hashes": 62,
+    "wp_versions": 45
+  },
+  "files": {
+    "wp-admin/css/colors/blue/colors.min.css": {
+      "030e6205711ce0398b8fff0a67498a2b": "5.7.15",
+      "09ba9aa3753dfc6aaa747e46172d7f0c": "4.1",
+      "51e2d43622254c747d5645518ad4b3d6": "5.6.17",
+      "56e5bd05fb72f0bb75db21cd6f8786da": "5.7",
+      "58b52e0c8528d52e040b8355a02eee77": "4.9",
+      "b05bd2b90583cd670ef66e4fbd08c12e": "4.3",
+      "bff3966d07076edaf48befe021c4112b": "4.0",
+      "dd77d909ddd0981a03cd1bcb90d2a56a": "4.4",
+      "e99f9ad98677585817cb3ed25b652b58": "5.3",
+      "fb4d3e2f7fe955aea70becac4602f87f": "4.5"
+    },
+    "wp-admin/css/wp-admin.min.css": {
+      "19084332c355439f6d42ebc0f0e78ebd": "4.3",
+      "1ac33574bd35da1e4cf9e66d2d173686": "4.4",
+      "2984023919bf18888432e7459d70bf00": "4.1",
+      "fceeca9707faf124a462d8e11a9bfb50": "4.0"
+    },
+    "wp-includes/css/dist/block-library/style.min.css": {
+      "0234d0a7685aefa6fd06041fbd602928": "6.4.8",
+      "27f5295ccf3ad9e0e85dcac543630288": "5.6",
+      "2dd1ffbe069ac537b7e471877bf16c32": "5.9",
+      "375bd65d60ff3c8723fccc343afb1b9b": "5.2",
+      "4c48b7dd10596a40acb74090e2230cbb": "5.5",
+      "4cdcd4a2c77fccb74825eaf2d6733091": "6.1",
+      "5d888445cd09ad35891ac468cd8b04cb": "5.6.17",
+      "612b7ab9f699e968f5b3206ca16ee834": "5.3.21",
+      "7a63f6bcae054a13315b6bf1d32dbcd4": "5.1",
+      "7d2051e6c59f3598b17877bf41637ec4": "5.4.19",
+      "7e7a1a9e3712cd16dade7c6e811ba28b": "5.9.13",
+      "80abe0410c6640e58fc1e18516c6602f": "5.2.24",
+      "99ab466e0866c823ae5db517d59cebd1": "6.4",
+      "9eeddc51b0b4a2580a959042d50f826e": "5.3",
+      "ae2de433ff67a6b85a931a9f232a3ae8": "6.6",
+      "b5d1e2c87b60ce71c3fd90ca27073250": "5.7.15",
+      "b7915926fe42d76e9c802353ab01dae4": "6.0.12",
+      "b9d4015ad4738655273de5ab3738e09e": "5.0",
+      "d0b8525a9eff4173fd149a06f341e531": "5.1.22",
+      "d534fc4463d84fecc2a0b4e847bec46e": "6.0",
+      "dfe67cbbac3da53fdbbaed71c91db428": "6.8",
+      "eae67119698a4c352712dd5c50e64c50": "6.1.10",
+      "eb1a96949e0ea0d08033d3f941bf1f3e": "5.0.25",
+      "eff184983dcabae2782a112fd2bdcb37": "5.7"
+    },
+    "wp-includes/js/wp-embed.min.js": {
+      "0203f8b4d98102d02f6a569c40a47d7b": "4.5",
+      "04133d37cfd0f08267530b905a5ffff3": "5.3",
+      "2213f2eec8faff7086aa22f304c35fe0": "5.9",
+      "2fb8dee3969a7597d0d892028e01cc2e": "4.4",
+      "66b3a15ec6f78bae407fa735fac0ab8c": "5.9.13"
+    },
+    "wp-includes/js/wp-emoji-release.min.js": {
+      "15d0c302dc74fd87bd9cfeab513e13e4": "5.0",
+      "1601e8da361dc8f86caa5afe88e37f5c": "4.4",
+      "1c64b125732c6fe54928ee058ea72595": "4.3",
+      "1dafa7fe14b33c26fef9b0e5ba0c8e72": "6.8",
+      "2d10e5e48acce801677c2cf9dd3a8641": "4.8.28",
+      "33479c6b333bb34fd771bf50df1fefc3": "5.1.22",
+      "8b90a6e26cce1c0a39bfa8b7e0fe909e": "4.8",
+      "8b9f36f8ca91dda15909c08299ddf4ad": "5.5",
+      "af2f44df3198cfda9fd515873696ad00": "4.9",
+      "b109ec410cb993d4697ab9c326e0fb53": "5.2.24",
+      "b2bdc6d8dfd107ed138f042d71ad4be2": "5.3",
+      "c17b309d8ab4b4e9653876d3c35c397d": "5.1",
+      "c748456e1cf97f3303ee25c838b1ad76": "5.6",
+      "c8d5a4cd14632bc2bdf15b5e45ca9d4d": "5.4.19",
+      "cb6284b70da03a43468244be7eafa362": "4.7",
+      "d6aeffd9e0126160ff89d369c05a5fbe": "5.3.21",
+      "dbb9840631ffd428143c1f80032ad6d9": "4.7.33",
+      "f3789112e7c443dc1d661159005af3e4": "4.5",
+      "fd997843190935059fe09163ecf229a5": "5.2"
+    }
+  }
+}

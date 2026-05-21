@@ -204,6 +204,16 @@ def update_db(
     plugin_limit: int = typer.Option(250, help="Top N plugins to pre-warm"),
     include_kev: bool = typer.Option(True, help="Include CISA KEV catalog"),
     include_osv: bool = typer.Option(False, help="Cross-fetch OSV.dev (slow)"),
+    include_fingerprints: bool = typer.Option(
+        False,
+        "--include-fingerprints",
+        help="Also (re)build the WP core MD5 fingerprint DB (long download).",
+    ),
+    fingerprints_full: bool = typer.Option(
+        False,
+        "--fingerprints-full",
+        help="With --include-fingerprints, fetch every patch release (slow).",
+    ),
 ) -> None:
     """Refresh the embedded CVE bundle from wpvulnerability.net + CISA KEV (+ OSV)."""
     console.print(BANNER)
@@ -233,6 +243,15 @@ def update_db(
             pass
 
     asyncio.run(_go())
+
+    if include_fingerprints:
+        console.print()
+        console.print(" [bold]Rebuilding WordPress core fingerprint DB...[/bold]")
+        from cve_db import wp_fingerprints_builder as _fp
+        argv: list[str] = []
+        if fingerprints_full:
+            argv.append("--full")
+        _fp.main(argv)
 
 
 @app.command()
