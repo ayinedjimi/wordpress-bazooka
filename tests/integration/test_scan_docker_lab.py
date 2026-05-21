@@ -22,18 +22,31 @@ from core.models import Severity
 LAB_URL = "http://localhost:8888"
 
 
-def _check_lab_available():
-    """Skip tests if Docker lab is not running."""
+_LAB_AVAILABLE_CACHE: list = []  # one-element memo to defer the network check
+
+
+def _check_lab_available() -> bool:
+    """Skip tests if Docker lab is not running. Cached after first call so we
+    don't probe the network on every test, but still NOT called at import time
+    (which would stall every pytest invocation by 1s+ even on unit-only runs)."""
+    if _LAB_AVAILABLE_CACHE:
+        return _LAB_AVAILABLE_CACHE[0]
     import httpx
     try:
-        r = httpx.get(LAB_URL, timeout=3, follow_redirects=True)
-        return r.status_code == 200
+        r = httpx.get(LAB_URL, timeout=1, follow_redirects=True)
+        ok = r.status_code == 200
     except Exception:
-        return False
+        ok = False
+    _LAB_AVAILABLE_CACHE.append(ok)
+    return ok
 
 
-LAB_AVAILABLE = _check_lab_available()
-skip_no_lab = pytest.mark.skipif(not LAB_AVAILABLE, reason="Docker lab not running on localhost:8888")
+# Lazy skip marker: the condition is re-evaluated on each test collection but
+# only HITS the network the first time, then uses the memo.
+skip_no_lab = pytest.mark.skipif(
+    "not __import__('tests.integration.test_scan_docker_lab', fromlist=['_check_lab_available'])._check_lab_available()",
+    reason="Docker lab not running on localhost:8888",
+)
 
 
 def _run_scan(profile="standard", pentest=False) -> ScanContext:

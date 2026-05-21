@@ -132,6 +132,9 @@ class TorProcess:
             [str(self.binary), "-f", str(torrc)],
             stdout=stdout,
             stderr=subprocess.STDOUT,
+            # Detach stdin so tor never blocks waiting for a passphrase / TTY
+            # confirmation if the parent stdin is something unusual.
+            stdin=subprocess.DEVNULL,
             creationflags=creationflags,
         )
         deadline = time.time() + ready_timeout

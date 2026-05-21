@@ -219,7 +219,20 @@ class ScanEngine:
                 console.print(f"    [{color}]{f.severity.value:8s}[/{color}] {conf:12s} {f.title}")
 
     async def run(self) -> ScanContext:
-        """Execute the full scan pipeline."""
+        """Execute the full scan pipeline.
+
+        Wraps _run() so session.close() always fires (even on exception) and
+        the underlying httpx.AsyncClient / connection pool cannot leak.
+        """
+        try:
+            return await self._run()
+        finally:
+            try:
+                await self.session.close()
+            except Exception:
+                pass
+
+    async def _run(self) -> ScanContext:
         self.target.meta.start_time = datetime.utcnow()
         start = time.time()
 
@@ -233,7 +246,16 @@ class ScanEngine:
 
         # Phase 0: WAF detection & calibration (before any module runs)
         console.print(" [bold cyan]\\[BOOTSTRAP][/bold cyan] WAF detection & calibration...")
-        waf_profile = await self.session.detect_waf(self.target.url)
+        # Hard cap: a slow / black-holed target shouldn't stall the CLI for
+        # 50+ seconds (5 sequential probes x 10s timeout).
+        try:
+            waf_profile = await asyncio.wait_for(
+                self.session.detect_waf(self.target.url), timeout=25.0
+            )
+        except asyncio.TimeoutError:
+            from core.session import WAFProfile
+            waf_profile = WAFProfile()
+            console.print("   WAF detection timed out, continuing without baseline")
         if waf_profile.detected:
             self.target.waf_detected = waf_profile.name
             self.ctx.set_data("waf_profile", waf_profile.to_dict())
@@ -271,5 +293,4 @@ class ScanEngine:
         console.print(f"\n Completed in {elapsed:.1f}s | {self.session.request_count} requests sent")
         console.print()
 
-        await self.session.close()
         return self.ctx

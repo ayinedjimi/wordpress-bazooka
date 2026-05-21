@@ -278,7 +278,13 @@ async def prewarm(
 
 
 def save_bundle(bundle: dict, path: Path = CACHE_PATH) -> int:
-    path.write_text(json.dumps(bundle, separators=(",", ":")), encoding="utf-8")
+    """Atomic write: stage to .tmp then os.replace() so a crash or a
+    concurrent `update-db` cannot leave the cache half-written / corrupted."""
+    import os as _os
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(bundle, separators=(",", ":")), encoding="utf-8")
+    _os.replace(tmp, path)
     return path.stat().st_size
 
 

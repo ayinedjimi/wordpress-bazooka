@@ -241,16 +241,21 @@ def _check_wpconfig(body: str) -> bool:
 
 def _check_base64_php(body: str) -> bool:
     """Check if body contains base64-encoded PHP content."""
-    # Try to find base64-encoded content in the body
-    # Remove whitespace and try to decode
-    for chunk in body.split():
-        if len(chunk) < 20:
-            continue
+    # Bail out on huge / binary-looking bodies — splitting and base64-decoding
+    # every chunk on a 10MB image would burn CPU for nothing.
+    if len(body) > 1_000_000:
+        return False
+    chunks = body.split()
+    if len(chunks) > 5000:
+        return False
+    # Only consider plausibly-base64-sized chunks (24..4096 chars). Skip the
+    # rest — > 4096 explodes runtime, < 24 cannot decode to anything useful.
+    candidates = [c for c in chunks if 20 <= len(c) <= 4096]
+    for chunk in candidates[:200]:
         try:
             decoded = base64.b64decode(chunk).decode("utf-8", errors="ignore")
             if decoded.strip().startswith("<?php"):
                 return True
-            # Also check for wp-config indicators in decoded content
             if _check_wpconfig(decoded):
                 return True
         except Exception:

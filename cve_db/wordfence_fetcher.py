@@ -80,8 +80,21 @@ def _kev_lookup(cve_id: str) -> bool:
             return True
     return False
 
-_MEM_CACHE: dict[str, dict] = {}
+# Bounded LRU: caps memory growth on long-running GUI sessions or batch scans
+# against many distinct targets. Eviction order is insertion/access order.
+from collections import OrderedDict as _OD
+_MEM_CACHE: "_OD[str, dict]" = _OD()
 _CACHE_LOADED = False
+_MEM_CACHE_MAX = 2000  # entries (each ~10 KB JSON)
+
+
+def _cache_touch(key: str, value: dict) -> None:
+    """Insert/update a key and evict the oldest entries past the cap."""
+    if key in _MEM_CACHE:
+        _MEM_CACHE.move_to_end(key)
+    _MEM_CACHE[key] = value
+    while len(_MEM_CACHE) > _MEM_CACHE_MAX:
+        _MEM_CACHE.popitem(last=False)
 # Async lock guarding _MEM_CACHE mutations and disk writes. asyncio.gather()
 # triggers concurrent writes from cve_matcher when many plugins are matched;
 # without this we corrupt wpvuln_cache.json or lose entries on race.
@@ -358,7 +371,7 @@ def match_plugin_cves(slug: str, version: Optional[str]) -> list[dict]:
             except Exception:
                 vulns = []
             entry = {"_ts": time.time(), "vulns": vulns}
-            _MEM_CACHE[slug_l] = entry
+            _cache_touch(slug_l, entry)
             _save_cache_sync()
     vulns = (entry or {}).get("vulns") or []
     out: list[dict] = []
@@ -391,7 +404,7 @@ async def match_plugin_cves_async(slug: str, version: Optional[str]) -> list[dic
         vulns = await _fetch_one(slug_l)
         async with _CACHE_LOCK:
             entry = {"_ts": time.time(), "vulns": vulns}
-            _MEM_CACHE[slug_l] = entry
+            _cache_touch(slug_l, entry)
             await _save_cache()
     vulns = entry.get("vulns") or []
     out: list[dict] = []
@@ -423,7 +436,7 @@ async def match_theme_cves_async(slug: str, version: Optional[str]) -> list[dict
         vulns = await _fetch_one(slug_l, is_theme=True)
         async with _CACHE_LOCK:
             entry = {"_ts": time.time(), "vulns": vulns}
-            _MEM_CACHE[cache_key] = entry
+            _cache_touch(cache_key, entry)
             await _save_cache()
     vulns = entry.get("vulns") or []
     out: list[dict] = []
@@ -477,7 +490,7 @@ async def match_infra_cves_async(kind: str, version: Optional[str]) -> list[dict
         vulns = await _fetch_infra(kind, version)
         async with _CACHE_LOCK:
             entry = {"_ts": time.time(), "vulns": vulns}
-            _MEM_CACHE[cache_key] = entry
+            _cache_touch(cache_key, entry)
             await _save_cache()
     vulns = entry.get("vulns") or []
     out: list[dict] = []
@@ -519,6 +532,6 @@ async def match_core_cves_async(version: Optional[str]) -> list[dict]:
             vulns = []
         async with _CACHE_LOCK:
             entry = {"_ts": time.time(), "vulns": vulns}
-            _MEM_CACHE[cache_key] = entry
+            _cache_touch(cache_key, entry)
             await _save_cache()
     return [_normalize(v, f"wp-core:{version}") for v in (entry.get("vulns") or [])]

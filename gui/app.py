@@ -142,6 +142,10 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
     log = scan["logs"]
     # Cap live-log size to avoid unbounded growth on long scans (GUI history)
     MAX_LOG_LINES = 5000
+    # Track the engine so we can close its httpx session in `finally` even when
+    # an exception aborts the scan mid-flight (otherwise the AsyncClient + its
+    # whole connection pool leaks on every failed scan).
+    engine: Optional["ScanEngine"] = None
 
     def L(msg: str):
         log.append(f"[{_ts()}] {msg}")
@@ -372,11 +376,9 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
         L("")
         L(f"Scan complete! {len(engine.ctx.findings)} findings | {engine.session.request_count} requests")
 
-        await engine.session.close()
-        # Free references so GC can reclaim memory
+        # session.close() now happens in the `finally` block (covers exceptions too)
         engine.ctx = None
         engine._modules.clear()
-        del engine
 
     except Exception as e:
         scan["status"] = "error"
@@ -384,6 +386,13 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
         import traceback
         L(traceback.format_exc())
     finally:
+        # Always close the engine's httpx session — even on exception — so the
+        # AsyncClient and its connection pool don't leak per failed scan.
+        if engine is not None:
+            try:
+                await engine.session.close()
+            except Exception:
+                pass
         tor_ref = scan.get("_tor")
         if tor_ref is not None:
             try:
@@ -484,7 +493,11 @@ _BACK_BUTTON_HTML = """
 <style>@media print { #bz-back-nav { display:none !important; } }</style>
 """
 
-_SAFE_DOMAIN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,253}$")
+# NOTE: ':' is intentionally excluded — Path.resolve() raises OSError on
+# Windows when a path segment contains ':' (drive-letter syntax). Domains
+# with explicit port (host:port) are written by loot/ as plain `host_port`
+# elsewhere, so the API never needs ':' here.
+_SAFE_DOMAIN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,253}$")
 
 
 def _safe_domain_dir(domain: str) -> Optional[Path]:

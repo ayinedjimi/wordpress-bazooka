@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 from core.models import Evidence, Finding, Severity, Confidence, FindingType, Compliance
@@ -22,12 +23,32 @@ SEVERITY_MAP = {
 ACTIVE_SOURCES = {"html_passive", "readme_active", "rest_namespace"}
 
 
+_PRERELEASE_SPLIT = re.compile(r"[-+_\s]")
+
+
 def _version_lte(version: str, max_version: str) -> bool:
+    """Conservative <= comparison that strips pre-release / build suffixes.
+
+    "5.8.1-beta" used to crash int() and silently return False (missed CVE).
+    Now we strip after the first separator that introduces non-digits and
+    compare on the numeric base, which over-reports rather than under-reports.
+    """
+    def _parse(v: str) -> tuple[int, ...]:
+        base = _PRERELEASE_SPLIT.split(str(v).strip(), 1)[0]
+        parts: list[int] = []
+        for x in base.split("."):
+            try:
+                parts.append(int(x))
+            except ValueError:
+                break  # stop at first non-numeric component
+        return tuple(parts)
     try:
-        v1 = tuple(int(x) for x in version.split("."))
-        v2 = tuple(int(x) for x in max_version.split("."))
+        v1 = _parse(version)
+        v2 = _parse(max_version)
+        if not v1 or not v2:
+            return False
         return v1 <= v2
-    except (ValueError, AttributeError):
+    except (TypeError, AttributeError):
         return False
 
 
@@ -47,6 +68,21 @@ class CVEMatcherModule(BazookaModule):
             match_core_cves_async,
         )
         db = get_db()
+        try:
+            return await self._run_inner(ctx, session, result, db,
+                                          match_plugin_cves_async,
+                                          match_infra_cves_async,
+                                          match_core_cves_async)
+        finally:
+            try:
+                db.close()
+            except Exception:
+                pass
+
+    async def _run_inner(self, ctx, session, result, db,
+                          match_plugin_cves_async,
+                          match_infra_cves_async,
+                          match_core_cves_async):
 
         plugins_detected = ctx.get_data("plugins_detected") or []
         detected_slugs = {p["slug"].lower() for p in plugins_detected if p.get("slug")}
@@ -339,5 +375,5 @@ class CVEMatcherModule(BazookaModule):
                 phase="vuln", module=self.name,
             ))
 
-        db.close()
+        # db.close() now happens in the run() wrapper's finally block
         return result
