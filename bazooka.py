@@ -165,7 +165,30 @@ def update_db() -> None:
     """Update the CVE database from online sources."""
     console.print(BANNER)
     console.print(" [bold]Updating CVE database...[/bold]")
-    console.print("  [yellow]Not yet implemented in v0.1 — using embedded signatures.[/yellow]")
+    console.print("  [yellow]Not yet implemented in v0.1 - using embedded signatures.[/yellow]")
+
+
+@app.command()
+def gui(
+    port: int = typer.Option(8666, "--port", "-p", help="Port to bind the web UI"),
+    host: str = typer.Option("127.0.0.1", "--host", help="Host to bind"),
+    no_browser: bool = typer.Option(False, "--no-browser", help="Don't open browser"),
+) -> None:
+    """Launch the real-time web GUI."""
+    import webbrowser
+    import uvicorn
+
+    console.print(BANNER)
+    console.print(Panel.fit(
+        f"  WordPress BAZOOKA - Web GUI\n  http://{host}:{port}\n  Ctrl+C to stop",
+        border_style="magenta",
+    ))
+    if not no_browser:
+        try:
+            webbrowser.open(f"http://{host}:{port}")
+        except Exception:
+            pass
+    uvicorn.run("gui.app:app", host=host, port=port, reload=False, log_level="warning")
 
 
 if __name__ == "__main__":

@@ -115,16 +115,24 @@ class ScanEngine:
         self._modules: dict[str, list[BazookaModule]] = {p: [] for p in PHASE_ORDER}
 
     def discover_modules(self) -> None:
-        """Auto-discover all modules in the modules/ directory."""
-        modules_dir = Path(__file__).parent.parent / "modules"
+        """Auto-discover all modules in the modules/ directory.
+
+        Works both from a normal source checkout and from a PyInstaller bundle
+        (where modules live inside the frozen archive, not a real filesystem dir).
+        """
         for phase in PHASE_ORDER:
-            phase_dir = modules_dir / phase
-            if not phase_dir.exists():
+            phase_pkg_name = f"modules.{phase}"
+            try:
+                phase_pkg = importlib.import_module(phase_pkg_name)
+            except Exception:
                 continue
-            for importer, modname, ispkg in pkgutil.iter_modules([str(phase_dir)]):
+            search_path = getattr(phase_pkg, "__path__", None)
+            if not search_path:
+                continue
+            for importer, modname, ispkg in pkgutil.iter_modules(search_path):
                 if modname.startswith("_"):
                     continue
-                full_module = f"modules.{phase}.{modname}"
+                full_module = f"{phase_pkg_name}.{modname}"
                 try:
                     mod = importlib.import_module(full_module)
                     for attr_name in dir(mod):
