@@ -183,7 +183,11 @@ async def prewarm(
     sem = asyncio.Semaphore(concurrency)
     counters = {"plugins": 0, "themes": 0, "core": 0, "infra": 0}
 
-    async with httpx.AsyncClient(verify=False) as client:
+    # SSL verification ON by default; users behind MITM proxy can opt out
+    # via BAZOOKA_INSECURE_FETCH=1 (same env var as the runtime fetcher).
+    import os as _os
+    _verify = _os.getenv("BAZOOKA_INSECURE_FETCH", "").lower() not in ("1", "true", "yes")
+    async with httpx.AsyncClient(verify=_verify) as client:
 
         async def fetch_plugin(slug: str) -> None:
             async with sem:

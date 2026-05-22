@@ -115,7 +115,7 @@ def _check_legacy_tls(hostname: str, port: int = 443, timeout: float = 5.0) -> d
         ctx_10.maximum_version = ssl.TLSVersion.TLSv1
         ctx_10.minimum_version = ssl.TLSVersion.TLSv1
         with socket.create_connection((hostname, port), timeout=timeout) as sock:
-            with ctx_10.wrap_socket(sock, server_hostname=hostname) as ssock:
+            with ctx_10.wrap_socket(sock, server_hostname=hostname):
                 results["tls_1_0"] = True
     except (ssl.SSLError, OSError, AttributeError):
         results["tls_1_0"] = False

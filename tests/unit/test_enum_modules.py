@@ -229,8 +229,9 @@ def test_wp_users_email_exposure():
     result = asyncio.run(module.run(ctx, session))
 
     ids = [f.id for f in result.findings]
-    assert "ENUM-USR-002" in ids
-    email_finding = [f for f in result.findings if f.id == "ENUM-USR-002"][0]
+    # ID renamed from "ENUM-USR-002" -> "ENUM-USR-EMAIL" for clarity
+    assert "ENUM-USR-EMAIL" in ids
+    email_finding = [f for f in result.findings if f.id == "ENUM-USR-EMAIL"][0]
     assert email_finding.severity == Severity.CRITICAL
 
 
@@ -279,7 +280,7 @@ Requires at least: 6.0
     ctx = make_ctx()
     module = WPPluginsModule()
 
-    result = asyncio.run(module.run(ctx, session))
+    asyncio.run(module.run(ctx, session))
 
     cf7 = [p for p in ctx.target.plugins if p.slug == "contact-form-7"]
     assert len(cf7) == 1
@@ -492,7 +493,6 @@ def test_xmlrpc_methods_enumeration():
     })
     # Override post to also return multicall response for second call
     call_count = {"n": 0}
-    original_post = session.post
 
     async def smart_post(url, **kwargs):
         call_count["n"] += 1

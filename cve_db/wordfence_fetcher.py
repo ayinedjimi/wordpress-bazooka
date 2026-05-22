@@ -22,6 +22,43 @@ import httpx
 # Users behind corporate MITM proxies can opt back in via env var.
 _VERIFY_SSL: bool = os.getenv("BAZOOKA_INSECURE_FETCH", "").lower() not in ("1", "true", "yes")
 
+# Process-wide singleton httpx.AsyncClient: one connection pool reused across
+# every per-plugin / per-infra / per-core fetch. Replaces the previous "new
+# AsyncClient per call" pattern which created TCP connection storms during a
+# CVE matcher run with many plugins (no keep-alive, no pool, ephemeral port
+# exhaustion risk on busy targets). Lazily created on first use; closed via
+# close_shared_client() at process exit (cli + gui both wrap engine.run).
+_SHARED_CLIENT: Optional[httpx.AsyncClient] = None
+_SHARED_CLIENT_LOCK = asyncio.Lock()
+
+
+async def _get_shared_client() -> httpx.AsyncClient:
+    """Return the process-wide AsyncClient, creating it on first call."""
+    global _SHARED_CLIENT
+    if _SHARED_CLIENT is not None and not _SHARED_CLIENT.is_closed:
+        return _SHARED_CLIENT
+    async with _SHARED_CLIENT_LOCK:
+        if _SHARED_CLIENT is None or _SHARED_CLIENT.is_closed:
+            _SHARED_CLIENT = httpx.AsyncClient(
+                timeout=httpx.Timeout(15.0, connect=5.0),
+                verify=_VERIFY_SSL,
+                follow_redirects=True,
+                headers={"User-Agent": "wordpress-bazooka/1.0"},
+                limits=httpx.Limits(max_keepalive_connections=10, max_connections=20),
+            )
+        return _SHARED_CLIENT
+
+
+async def close_shared_client() -> None:
+    """Close the singleton httpx client (called at engine teardown)."""
+    global _SHARED_CLIENT
+    if _SHARED_CLIENT is not None and not _SHARED_CLIENT.is_closed:
+        try:
+            await _SHARED_CLIENT.aclose()
+        except Exception:
+            pass
+    _SHARED_CLIENT = None
+
 WPV_URL = "https://www.wpvulnerability.net/plugin/{slug}/"
 WPV_THEME_URL = "https://www.wpvulnerability.net/theme/{slug}/"
 WPV_INFRA_URLS = {
@@ -319,24 +356,21 @@ def _slug_variants(slug: str) -> list[str]:
 async def _fetch_one(slug: str, is_theme: bool = False) -> list[dict]:
     """Fetch CVE for a slug, trying canonical variants until one returns data."""
     base_tmpl = WPV_THEME_URL if is_theme else WPV_URL
-    async with httpx.AsyncClient(timeout=15.0, verify=_VERIFY_SSL) as client:
-        for variant in _slug_variants(slug):
-            try:
-                resp = await client.get(
-                    base_tmpl.format(slug=variant),
-                    headers={"User-Agent": "wordpress-bazooka/0.1"},
-                )
-                if resp.status_code != 200:
-                    continue
-                data = resp.json()
-            except Exception:
+    client = await _get_shared_client()
+    for variant in _slug_variants(slug):
+        try:
+            resp = await client.get(base_tmpl.format(slug=variant))
+            if resp.status_code != 200:
                 continue
-            if isinstance(data, dict) and not data.get("error"):
-                payload = data.get("data") or {}
-                if isinstance(payload, dict):
-                    vulns = payload.get("vulnerability") or []
-                    if vulns:
-                        return vulns
+            data = resp.json()
+        except Exception:
+            continue
+        if isinstance(data, dict) and not data.get("error"):
+            payload = data.get("data") or {}
+            if isinstance(payload, dict):
+                vulns = payload.get("vulnerability") or []
+                if vulns:
+                    return vulns
     return []
 
 
@@ -465,11 +499,11 @@ async def _fetch_infra(kind: str, version: str) -> list[dict]:
         return []
     url = url_tmpl.format(ver=version)
     try:
-        async with httpx.AsyncClient(timeout=15.0, verify=_VERIFY_SSL) as client:
-            resp = await client.get(url, headers={"User-Agent": "wordpress-bazooka/0.1"})
-            if resp.status_code != 200:
-                return []
-            data = resp.json()
+        client = await _get_shared_client()
+        resp = await client.get(url)
+        if resp.status_code != 200:
+            return []
+        data = resp.json()
     except Exception:
         return []
     if not isinstance(data, dict) or data.get("error"):
@@ -531,15 +565,15 @@ async def match_core_cves_async(version: Optional[str]) -> list[dict]:
     if entry is None or (time.time() - entry.get("_ts", 0) > CACHE_TTL):
         url = WPV_CORE_URL.format(ver=version)
         try:
-            async with httpx.AsyncClient(timeout=20.0, verify=_VERIFY_SSL) as client:
-                resp = await client.get(url, headers={"User-Agent": "wordpress-bazooka/0.1"})
-                vulns = []
-                if resp.status_code == 200:
-                    data = resp.json()
-                    if isinstance(data, dict) and not data.get("error"):
-                        payload = data.get("data") or {}
-                        if isinstance(payload, dict):
-                            vulns = payload.get("vulnerability") or []
+            client = await _get_shared_client()
+            resp = await client.get(url)
+            vulns = []
+            if resp.status_code == 200:
+                data = resp.json()
+                if isinstance(data, dict) and not data.get("error"):
+                    payload = data.get("data") or {}
+                    if isinstance(payload, dict):
+                        vulns = payload.get("vulnerability") or []
         except Exception:
             vulns = []
         async with _CACHE_LOCK:

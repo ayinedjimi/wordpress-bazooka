@@ -263,36 +263,40 @@ def test_rate_limit_should_run_allows_standard():
 # ---------------------------------------------------------------------------
 
 def test_xss_reflected_payload():
-    """Search page reflects <script> payload unencoded -> XSS finding."""
-    from modules.vuln.xss_scanner import XSSScannerModule
+    """Search page reflects the module's exact payload unencoded -> XSS finding."""
+    from modules.vuln.xss_scanner import XSSScannerModule, XSS_PAYLOADS
+    from urllib.parse import unquote
 
-    payload = '<script>alert("BZ")</script>'
-    body = f'<html><body><p>Search results for: {payload}</p></body></html>'
-
-    # The module tries multiple payloads; we match the first one
+    # Echo back whatever the module sends in `?<param>=<payload>` — this models
+    # a target that reflects every query param value verbatim into the body.
     session = MockSession()
-    # Override get to check if the URL contains the payload
-    original_responses = {}
 
-    async def xss_get(url, **kwargs):
-        if payload in url or "script" in url.lower():
-            return MockResponse(200, body)
-        return MockResponse(200, "<html>safe</html>")
+    async def echo_get(url, **kwargs):
+        # Extract whatever value comes after the first '=' (raw URL value),
+        # url-decode it, and reflect it into the body.
+        if "=" in url:
+            raw = url.split("=", 1)[1]
+            value = unquote(raw)
+        else:
+            value = ""
+        return MockResponse(200,
+            f'<html><body><p>Search results for: {value}</p></body></html>')
 
-    session.get = xss_get
+    session.get = echo_get
     ctx = make_ctx()
     module = XSSScannerModule()
 
     result = asyncio.run(module.run(ctx, session))
 
     ids = [f.id for f in result.findings]
-    assert "VULN-XSS-001" in ids
-    finding = result.findings[0]
-    assert finding.severity == Severity.HIGH
+    # First reflected payload yields VULN-XSS-001 (per-payload incrementing id)
+    assert "VULN-XSS-001" in ids, f"got {ids}"
+    high_findings = [f for f in result.findings if f.severity == Severity.HIGH]
+    assert high_findings, "expected at least one HIGH XSS finding"
 
 
 def test_xss_encoded_output():
-    """Search page encodes the payload -> no XSS finding (INFO)."""
+    """Search page encodes the payload -> no XSS finding (INFO "clear" emitted)."""
     from modules.vuln.xss_scanner import XSSScannerModule
 
     async def safe_get(url, **kwargs):
@@ -306,9 +310,11 @@ def test_xss_encoded_output():
     result = asyncio.run(module.run(ctx, session))
 
     ids = [f.id for f in result.findings]
-    assert "VULN-XSS-001" not in ids
-    assert "VULN-XSS-000" in ids  # "no XSS detected" info finding
-    info_finding = [f for f in result.findings if f.id == "VULN-XSS-000"][0]
+    # Module no longer emits "VULN-XSS-001" when nothing reflects; the
+    # "no XSS detected" sentinel was renamed from VULN-XSS-000 -> VULN-XSS-CLEAR
+    assert not any(i.startswith("VULN-XSS-0") for i in ids), f"unexpected XSS finding: {ids}"
+    assert "VULN-XSS-CLEAR" in ids
+    info_finding = [f for f in result.findings if f.id == "VULN-XSS-CLEAR"][0]
     assert info_finding.severity == Severity.INFO
 
 
@@ -364,9 +370,11 @@ def test_sqli_no_error():
     result = asyncio.run(module.run(ctx, session))
 
     ids = [f.id for f in result.findings]
-    assert "VULN-SQLI-001" not in ids
-    assert "VULN-SQLI-000" in ids
-    info_finding = [f for f in result.findings if f.id == "VULN-SQLI-000"][0]
+    # No SQL error in any response -> only the "clear" sentinel emitted (renamed
+    # from VULN-SQLI-000 -> VULN-SQLI-CLEAR)
+    assert not any(i.startswith("VULN-SQLI-0") for i in ids), f"unexpected SQLi finding: {ids}"
+    assert "VULN-SQLI-CLEAR" in ids
+    info_finding = [f for f in result.findings if f.id == "VULN-SQLI-CLEAR"][0]
     assert info_finding.severity == Severity.INFO
 
 
@@ -424,7 +432,11 @@ def test_cve_matcher_plugin_match():
     mock_db.lookup_core.return_value = []
 
     ctx = make_ctx()
-    ctx.target.plugins = [WPPlugin(slug="contact-form-7", version="5.8.1")]
+    plugin = WPPlugin(slug="contact-form-7", version="5.8.1", discovery_method="html_passive")
+    ctx.target.plugins = [plugin]
+    # cve_matcher only scans plugins that are also in ctx.data["plugins_detected"]
+    # (FP-guard introduced after the Elementor false-positive incident)
+    ctx.set_data("plugins_detected", [{"slug": "contact-form-7", "version": "5.8.1"}])
 
     session = MockSession()
     module = CVEMatcherModule()
@@ -432,11 +444,13 @@ def test_cve_matcher_plugin_match():
     with patch("cve_db.manager.get_db", return_value=mock_db):
         result = asyncio.run(module.run(ctx, session))
 
-    cve_ids = [f.title.split(" ")[0] for f in result.findings if f.id.startswith("VULN-CVE-0")]
+    cve_ids = [f.title.split(" ")[0] for f in result.findings if f.id.startswith("VULN-CVE-")]
     # Both CVEs affect 5.8.1 (5.8.1 <= 5.8.3, 5.8.1 <= 5.9.4)
     assert "CVE-2023-6449" in cve_ids
     assert "CVE-2024-6625" in cve_ids
-    assert result.data.get("cve_matches_total") == 2
+    # Total >= 2 because the module also queries the embedded prewarm cache
+    # (wpvulnerability.net) which has additional contact-form-7 CVEs.
+    assert result.data.get("cve_matches_total", 0) >= 2
 
 
 def test_cve_matcher_no_match():

@@ -256,6 +256,13 @@ class ScanEngine:
                 await self.session.close()
             except Exception:
                 pass
+            # Close the wordfence_fetcher's singleton AsyncClient too —
+            # otherwise its connection pool lingers until process exit.
+            try:
+                from cve_db.wordfence_fetcher import close_shared_client
+                await close_shared_client()
+            except Exception:
+                pass
 
     async def _run(self) -> ScanContext:
         self.target.meta.start_time = datetime.now(timezone.utc)

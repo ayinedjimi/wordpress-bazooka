@@ -63,52 +63,61 @@ class ServiceDetectModule(BazookaModule):
         discovered_services: list[dict] = []
         sem = asyncio.Semaphore(10)
 
-        async def _probe_service(ip: str, port: int, sig: dict) -> dict | None:
-            """Send an HTTP GET and check for service fingerprint."""
-            scheme = "https" if port in (443, 8443) else "http"
-            url = f"{scheme}://{ip}:{port}{sig['path']}"
+        # Single AsyncClient shared across the whole probe sweep:
+        # - reuses TCP connections (keep-alive)
+        # - one place that owns SSL verification policy
+        # - massively cheaper than 1 client per (host,port,sig) combination
+        # We still bypass BazookaSession deliberately: these are internal/adjacent
+        # IPs that aren't subject to WAF detection / target-aware throttling.
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(5.0, connect=3.0),
+            verify=True,  # was False — silently accepted MITM certs
+            follow_redirects=True,
+            limits=httpx.Limits(max_keepalive_connections=10, max_connections=20),
+            headers={"User-Agent": "Mozilla/5.0"},
+        ) as shared_client:
 
-            async with sem:
-                try:
-                    # Use a raw httpx client to avoid session caching/throttling overhead
-                    async with httpx.AsyncClient(
-                        timeout=httpx.Timeout(5.0, connect=3.0),
-                        verify=False,
-                        follow_redirects=True,
-                    ) as client:
-                        resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            async def _probe_service(ip: str, port: int, sig: dict) -> dict | None:
+                """Send an HTTP GET and check for service fingerprint."""
+                scheme = "https" if port in (443, 8443) else "http"
+                url = f"{scheme}://{ip}:{port}{sig['path']}"
 
-                    if resp.status_code < 500:
-                        body_lower = resp.text[:3000].lower()
-                        matched = [p for p in sig["patterns"] if p.lower() in body_lower]
-                        if len(matched) >= 2:
-                            return {
-                                "ip": ip,
-                                "port": port,
-                                "service": sig["label"],
-                                "path": sig["path"],
-                                "status": resp.status_code,
-                                "matched_patterns": matched,
-                                "excerpt": resp.text[:200],
-                            }
-                except Exception:
-                    pass
-            return None
+                async with sem:
+                    try:
+                        resp = await shared_client.get(url)
+                        if resp.status_code < 500:
+                            body_lower = resp.text[:3000].lower()
+                            matched = [p for p in sig["patterns"] if p.lower() in body_lower]
+                            if len(matched) >= 2:
+                                return {
+                                    "ip": ip,
+                                    "port": port,
+                                    "service": sig["label"],
+                                    "path": sig["path"],
+                                    "status": resp.status_code,
+                                    "matched_patterns": matched,
+                                    "excerpt": resp.text[:200],
+                                }
+                    except (httpx.RequestError, httpx.TimeoutException):
+                        pass
+                    except Exception:
+                        pass
+                return None
 
-        # Build all probe tasks
-        tasks = []
-        for host in network_hosts:
-            ip = host["ip"]
-            for port_info in host.get("ports", []):
-                port = port_info["port"]
-                for sig in _SERVICE_SIGNATURES:
-                    tasks.append(_probe_service(ip, port, sig))
+            # Build all probe tasks
+            tasks = []
+            for host in network_hosts:
+                ip = host["ip"]
+                for port_info in host.get("ports", []):
+                    port = port_info["port"]
+                    for sig in _SERVICE_SIGNATURES:
+                        tasks.append(_probe_service(ip, port, sig))
 
-        if not tasks:
-            result.status = "skipped"
-            return result
+            if not tasks:
+                result.status = "skipped"
+                return result
 
-        probe_results = await asyncio.gather(*tasks)
+            probe_results = await asyncio.gather(*tasks)
 
         for svc in probe_results:
             if svc is not None:

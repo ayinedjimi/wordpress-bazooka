@@ -142,8 +142,8 @@ def test_dns_enum_spf_soft_fail():
         ("test.com", "TXT"): ['"v=spf1 include:_spf.google.com ~all"'],
         ("test.com", "A"): ["1.2.3.4"],
     }
-    mock_resolve = _mock_resolve_factory(records)
-
+    # `mock_resolve` from `_mock_resolve_factory(records)` is superseded by
+    # `resolve_with_dmarc` defined right below; only the latter is patched in.
     # DMARC lookup also needs to succeed — provide a proper DMARC
     def resolve_with_dmarc(qname, rdtype):
         key = (str(qname), str(rdtype))
