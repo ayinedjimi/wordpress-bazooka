@@ -334,7 +334,9 @@ class BazookaSession:
 
         await self._throttle()
 
-        headers = kwargs.pop("headers", {})
+        # `or {}` covers callers that pass headers=None explicitly (otherwise
+        # the next line ' "User-Agent" not in headers ' raises TypeError).
+        headers = kwargs.pop("headers", {}) or {}
         if "User-Agent" not in headers:
             headers["User-Agent"] = self._get_ua()
         kwargs["headers"] = headers

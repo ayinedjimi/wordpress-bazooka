@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -693,7 +693,10 @@ class CVEDatabase:
 
     def _connect(self) -> sqlite3.Connection:
         if self._conn is None:
-            self._conn = sqlite3.connect(str(self.db_path))
+            # check_same_thread=False so the connection can be used from
+            # asyncio.to_thread workers without ProgrammingError. Reads only,
+            # so the lack of thread isolation is safe in our usage.
+            self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
             self._conn.row_factory = sqlite3.Row
         return self._conn
 
@@ -714,7 +717,7 @@ class CVEDatabase:
             )
             conn.execute(
                 "INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)",
-                ("last_update", datetime.utcnow().isoformat()),
+                ("last_update", datetime.now(timezone.utc).isoformat()),
             )
             conn.commit()
 

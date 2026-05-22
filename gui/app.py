@@ -7,7 +7,7 @@ import json
 import re
 import sys
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -121,7 +121,7 @@ async def start_scan(request: Request):
         # this to translate its absolute `last_log_idx` into a valid slice index
         # — without it, truncation makes new_logs always return [] until restart.
         "logs_offset": 0,
-        "started": datetime.utcnow().isoformat(),
+        "started": datetime.now(timezone.utc).isoformat(),
         "ctx": None,
     }
 
@@ -353,7 +353,7 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
 
         # Update meta before report generation
         engine.target.meta.total_requests = engine.session.request_count
-        engine.target.meta.end_time = datetime.utcnow()
+        engine.target.meta.end_time = datetime.now(timezone.utc)
 
         # Generate reports
         scan["phase"] = "reporting"
@@ -405,7 +405,7 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
 
 
 def _ts() -> str:
-    return datetime.utcnow().strftime("%H:%M:%S")
+    return datetime.now(timezone.utc).strftime("%H:%M:%S")
 
 
 @app.get("/scan/{scan_id}", response_class=HTMLResponse)

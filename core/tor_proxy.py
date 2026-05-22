@@ -122,36 +122,50 @@ class TorProcess:
         return torrc
 
     def start(self, ready_timeout: float = 60.0) -> None:
-        torrc = self._build_torrc()
+        """Boot tor.exe with a retry loop on port collisions (TOCTOU window
+        between _free_port returning and tor binding the same port).
+        """
         stdout = None if self.verbose else subprocess.DEVNULL
         creationflags = 0
         if sys.platform == "win32":
-            # CREATE_NO_WINDOW: keeps the console clean
-            creationflags = 0x08000000
-        self.process = subprocess.Popen(
-            [str(self.binary), "-f", str(torrc)],
-            stdout=stdout,
-            stderr=subprocess.STDOUT,
-            # Detach stdin so tor never blocks waiting for a passphrase / TTY
-            # confirmation if the parent stdin is something unusual.
-            stdin=subprocess.DEVNULL,
-            creationflags=creationflags,
-        )
-        deadline = time.time() + ready_timeout
-        while time.time() < deadline:
-            if self.process.poll() is not None:
-                raise RuntimeError(
-                    f"Tor exited prematurely (rc={self.process.returncode})"
-                )
-            if _port_open(self.socks_port):
-                # SOCKS port open ≠ bootstrap done. Give it a small head-start.
-                # For most circuits 5-15s extra is enough.
-                time.sleep(2.0)
+            creationflags = 0x08000000  # CREATE_NO_WINDOW
+
+        last_exc: Optional[Exception] = None
+        for attempt in range(3):
+            torrc = self._build_torrc()
+            self.process = subprocess.Popen(
+                [str(self.binary), "-f", str(torrc)],
+                stdout=stdout,
+                stderr=subprocess.STDOUT,
+                # Detach stdin so tor never blocks waiting for a passphrase / TTY
+                # confirmation if the parent stdin is something unusual.
+                stdin=subprocess.DEVNULL,
+                creationflags=creationflags,
+            )
+            deadline = time.time() + ready_timeout
+            while time.time() < deadline:
+                rc = self.process.poll()
+                if rc is not None:
+                    # Tor died — likely "Could not bind to ..." port collision.
+                    # Re-pick fresh ports and retry up to 3 times.
+                    last_exc = RuntimeError(f"Tor exited prematurely (rc={rc}) on attempt {attempt+1}")
+                    self.socks_port = _free_port(0)
+                    self.control_port = _free_port(0)
+                    break
                 if _port_open(self.socks_port):
-                    return
-            time.sleep(0.5)
-        self.stop()
-        raise TimeoutError(f"Tor did not open SOCKS port {self.socks_port} in {ready_timeout}s")
+                    time.sleep(2.0)  # bootstrap head-start
+                    if _port_open(self.socks_port):
+                        return
+                time.sleep(0.5)
+            else:
+                self.stop()
+                raise TimeoutError(
+                    f"Tor did not open SOCKS port {self.socks_port} in {ready_timeout}s"
+                )
+        # All retries exhausted
+        if last_exc:
+            raise last_exc
+        raise RuntimeError("Tor failed to start after 3 attempts")
 
     def rotate_identity(self) -> bool:
         """Send NEWNYM to get a fresh circuit (new exit IP). Best-effort."""

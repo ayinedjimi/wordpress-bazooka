@@ -6,7 +6,7 @@ import asyncio
 import importlib
 import pkgutil
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
@@ -57,8 +57,13 @@ class ScanContext:
         return dict(self._actions)
 
     def add_finding(self, finding: Finding) -> None:
+        # Single source of truth. `target.findings` used to be a parallel list;
+        # we keep it as a Pydantic field for backward-compat with consumers /
+        # report serializers and assign a SHARED reference (no copy) so it
+        # mirrors ctx.findings without doubling memory.
         self.findings.append(finding)
-        self.target.findings.append(finding)
+        if self.target.findings is not self.findings:
+            self.target.findings = self.findings
 
     def add_findings(self, findings: list[Finding]) -> None:
         for f in findings:
@@ -169,8 +174,9 @@ class ScanEngine:
         if not modules:
             return
 
-        # Sort by dependencies
-        modules.sort(key=lambda m: len(m.dependencies))
+        # Sort by dependencies (NOT in-place — self._modules[phase] must keep
+        # discovery order so reuse of the engine instance is deterministic).
+        modules = sorted(modules, key=lambda m: len(m.dependencies))
 
         phase_label = phase.upper()
         console.print(f"\n [bold cyan]\\[{phase_label}][/bold cyan] Running {len(modules)} checks...")
@@ -233,7 +239,7 @@ class ScanEngine:
                 pass
 
     async def _run(self) -> ScanContext:
-        self.target.meta.start_time = datetime.utcnow()
+        self.target.meta.start_time = datetime.now(timezone.utc)
         start = time.time()
 
         console.print()
@@ -276,7 +282,7 @@ class ScanEngine:
                 continue
             await self._run_phase(phase)
 
-        self.target.meta.end_time = datetime.utcnow()
+        self.target.meta.end_time = datetime.now(timezone.utc)
         self.target.meta.total_requests = self.session.request_count
         elapsed = time.time() - start
 

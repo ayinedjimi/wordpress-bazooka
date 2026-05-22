@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import TYPE_CHECKING
+
+import httpx
 
 from core.models import Compliance, Evidence, Finding, Severity, Confidence, FindingType
 from modules.base import BazookaModule, ModuleResult
@@ -11,6 +14,14 @@ from modules.base import BazookaModule, ModuleResult
 if TYPE_CHECKING:
     from core.engine import ScanContext
     from core.session import BazookaSession
+
+_log = logging.getLogger("bazooka.rest_api_exposure")
+# Narrow exceptions for transport errors — anything else should surface as a
+# debug log (rather than being silently swallowed and masking real bugs).
+_TRANSPORT_ERRORS = (
+    httpx.RequestError, httpx.TimeoutException, httpx.HTTPStatusError,
+    ValueError,  # json.JSONDecodeError subclasses it
+)
 
 
 class RestAPIExposureModule(BazookaModule):
@@ -82,8 +93,10 @@ class RestAPIExposureModule(BazookaModule):
                         module=self.name,
                         tags=["rest-api", "user-enumeration", "email-disclosure"],
                     ))
-        except Exception:
+        except _TRANSPORT_ERRORS:
             pass
+        except Exception as _e:
+            _log.debug("unexpected error in rest_api_exposure: %s", _e)
 
         # ── Test 2: Settings endpoint exposed ────────────────────────────────
         try:
@@ -139,8 +152,10 @@ class RestAPIExposureModule(BazookaModule):
                         module=self.name,
                         tags=["rest-api", "settings", "configuration-exposure"],
                     ))
-        except Exception:
+        except _TRANSPORT_ERRORS:
             pass
+        except Exception as _e:
+            _log.debug("unexpected error in rest_api_exposure: %s", _e)
 
         # ── Test 3: Themes endpoint with inactive themes ─────────────────────
         try:
@@ -203,8 +218,10 @@ class RestAPIExposureModule(BazookaModule):
                             module=self.name,
                             tags=["rest-api", "themes", "info-disclosure"],
                         ))
-        except Exception:
+        except _TRANSPORT_ERRORS:
             pass
+        except Exception as _e:
+            _log.debug("unexpected error in rest_api_exposure: %s", _e)
 
         # ── Test 4: Plugins endpoint exposed ─────────────────────────────────
         try:
@@ -264,8 +281,10 @@ class RestAPIExposureModule(BazookaModule):
                         module=self.name,
                         tags=["rest-api", "plugins", "version-disclosure"],
                     ))
-        except Exception:
+        except _TRANSPORT_ERRORS:
             pass
+        except Exception as _e:
+            _log.debug("unexpected error in rest_api_exposure: %s", _e)
 
         # ── Test 5: User creation without auth ───────────────────────────────
         try:
@@ -349,8 +368,10 @@ class RestAPIExposureModule(BazookaModule):
                     module=self.name,
                     tags=["rest-api", "user-creation", "auth-bypass", "critical"],
                 ))
-        except Exception:
+        except _TRANSPORT_ERRORS:
             pass
+        except Exception as _e:
+            _log.debug("unexpected error in rest_api_exposure: %s", _e)
 
         # ── Test 6: Search leaking private content ───────────────────────────
         try:
@@ -411,7 +432,9 @@ class RestAPIExposureModule(BazookaModule):
                         module=self.name,
                         tags=["rest-api", "search", "private-content-leak"],
                     ))
-        except Exception:
+        except _TRANSPORT_ERRORS:
             pass
+        except Exception as _e:
+            _log.debug("unexpected error in rest_api_exposure: %s", _e)
 
         return result

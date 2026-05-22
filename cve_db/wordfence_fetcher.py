@@ -10,12 +10,17 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import time
 from pathlib import Path
 from typing import Optional
 
 import httpx
+
+# SSL verification: ON by default (was OFF and silently accepted MITM certs).
+# Users behind corporate MITM proxies can opt back in via env var.
+_VERIFY_SSL: bool = os.getenv("BAZOOKA_INSECURE_FETCH", "").lower() not in ("1", "true", "yes")
 
 WPV_URL = "https://www.wpvulnerability.net/plugin/{slug}/"
 WPV_THEME_URL = "https://www.wpvulnerability.net/theme/{slug}/"
@@ -101,7 +106,13 @@ def _cache_touch(key: str, value: dict) -> None:
 _CACHE_LOCK = asyncio.Lock()
 
 
-def _load_cache() -> dict[str, dict]:
+def _load_cache() -> "_OD[str, dict]":
+    """Lazy-load wpvuln_cache.json into _MEM_CACHE preserving OrderedDict type.
+
+    Previously assigned the result of json.load() directly to _MEM_CACHE which
+    is a plain dict — this broke _cache_touch's .move_to_end() / .popitem(last=False)
+    calls on the very next mutation, crashing the CVE matcher.
+    """
     global _MEM_CACHE, _CACHE_LOADED
     if _CACHE_LOADED:
         return _MEM_CACHE
@@ -111,9 +122,10 @@ def _load_cache() -> dict[str, dict]:
     try:
         with open(CACHE_PATH, "r", encoding="utf-8") as f:
             blob = json.load(f)
-        _MEM_CACHE = blob if isinstance(blob, dict) else {}
+        # Always wrap in OrderedDict — json.load() returns a plain dict
+        _MEM_CACHE = _OD(blob) if isinstance(blob, dict) else _OD()
     except Exception:
-        _MEM_CACHE = {}
+        _MEM_CACHE = _OD()
     return _MEM_CACHE
 
 
@@ -307,7 +319,7 @@ def _slug_variants(slug: str) -> list[str]:
 async def _fetch_one(slug: str, is_theme: bool = False) -> list[dict]:
     """Fetch CVE for a slug, trying canonical variants until one returns data."""
     base_tmpl = WPV_THEME_URL if is_theme else WPV_URL
-    async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
+    async with httpx.AsyncClient(timeout=15.0, verify=_VERIFY_SSL) as client:
         for variant in _slug_variants(slug):
             try:
                 resp = await client.get(
@@ -332,7 +344,7 @@ async def _fetch_one_legacy(slug: str, is_theme: bool = False) -> list[dict]:
     """Old single-URL fetch — kept for reference, not used."""
     url = (WPV_THEME_URL if is_theme else WPV_URL).format(slug=slug)
     try:
-        async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
+        async with httpx.AsyncClient(timeout=15.0, verify=_VERIFY_SSL) as client:
             resp = await client.get(url, headers={"User-Agent": "wordpress-bazooka/0.1"})
             if resp.status_code != 200:
                 return []
@@ -453,7 +465,7 @@ async def _fetch_infra(kind: str, version: str) -> list[dict]:
         return []
     url = url_tmpl.format(ver=version)
     try:
-        async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
+        async with httpx.AsyncClient(timeout=15.0, verify=_VERIFY_SSL) as client:
             resp = await client.get(url, headers={"User-Agent": "wordpress-bazooka/0.1"})
             if resp.status_code != 200:
                 return []
@@ -519,7 +531,7 @@ async def match_core_cves_async(version: Optional[str]) -> list[dict]:
     if entry is None or (time.time() - entry.get("_ts", 0) > CACHE_TTL):
         url = WPV_CORE_URL.format(ver=version)
         try:
-            async with httpx.AsyncClient(timeout=20.0, verify=False) as client:
+            async with httpx.AsyncClient(timeout=20.0, verify=_VERIFY_SSL) as client:
                 resp = await client.get(url, headers={"User-Agent": "wordpress-bazooka/0.1"})
                 vulns = []
                 if resp.status_code == 200:

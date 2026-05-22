@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -73,7 +73,7 @@ def generate_html_report(ctx: ScanContext, output_dir: Path) -> Path:
     template_data = {
         "target_url": ctx.target.url,
         "target_domain": ctx.target.domain,
-        "scan_date": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+        "scan_date": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "profile": ctx.profile,
         "authorization_ref": meta.authorization_ref or "",
         "duration": duration,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -72,7 +72,7 @@ def generate_docx_report(ctx: ScanContext, output_dir: Path) -> Path:
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     meta = ctx.target.meta
-    date_str = datetime.utcnow().strftime("%d/%m/%Y")
+    date_str = datetime.now(timezone.utc).strftime("%d/%m/%Y")
     run = p.add_run(f"\nDate: {date_str}\nProfil: {meta.profile}\nRequetes: {meta.total_requests}\n")
     run.font.size = Pt(12)
     run.font.color.rgb = RGBColor(100, 100, 100)
@@ -317,7 +317,7 @@ def generate_docx_report(ctx: ScanContext, output_dir: Path) -> Path:
     doc.add_page_break()
     _add_heading(doc, "6. Annexes", 1)
     _add_para(doc, f"WordPress BAZOOKA v{meta.bazooka_version}", bold=True)
-    _add_para(doc, f"Genere le {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+    _add_para(doc, f"Genere le {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
     _add_para(doc, f"Total: {total} vulnerabilites | {meta.total_requests} requetes | Profil: {meta.profile}")
     _add_para(doc, "Ce rapport a ete genere automatiquement et ne remplace pas l'expertise humaine.", italic=True, size=9)
 

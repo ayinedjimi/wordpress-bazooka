@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 
@@ -72,7 +72,7 @@ class Finding(BaseModel):
     phase: str = ""
     module: str = ""
     disclosure_method: str = "active_test"
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     tags: list[str] = Field(default_factory=list)
 
 
@@ -84,7 +84,7 @@ class ScanMeta(BaseModel):
     scope_file: Optional[str] = None
     authorization_ref: Optional[str] = None
     profile: str = "standard"
-    start_time: datetime = Field(default_factory=datetime.utcnow)
+    start_time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: Optional[datetime] = None
     total_requests: int = 0
     modules_executed: int = 0
