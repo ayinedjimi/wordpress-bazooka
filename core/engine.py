@@ -193,6 +193,11 @@ class ScanEngine:
 
             sem = asyncio.Semaphore(self.threads)
 
+            # Per-module FP-storm threshold: a single module emitting more
+            # than this many findings (excluding INFO) is almost certainly
+            # generating false positives — we truncate + emit one warning.
+            FINDINGS_THRESHOLD = 100
+
             async def run_module(mod: BazookaModule) -> Optional[ModuleResult]:
                 async with sem:
                     if not mod.should_run(self.ctx):
@@ -203,6 +208,20 @@ class ScanEngine:
                         result = await mod.run(self.ctx, self.session)
                         self.target.meta.modules_executed += 1
                         if result.findings:
+                            # Threshold guard against runaway FP storms (e.g. a
+                            # plugin wordlist matching 5000 themed-404 paths).
+                            non_info = [f for f in result.findings
+                                        if f.severity != Severity.INFO]
+                            if len(non_info) > FINDINGS_THRESHOLD:
+                                kept = non_info[:FINDINGS_THRESHOLD]
+                                infos = [f for f in result.findings
+                                         if f.severity == Severity.INFO]
+                                console.print(
+                                    f"    [yellow]WARN[/yellow] {mod.name}: "
+                                    f"emitted {len(non_info)} non-INFO findings — "
+                                    f"truncated to {FINDINGS_THRESHOLD} (possible FP storm)"
+                                )
+                                result.findings = kept + infos
                             self.ctx.add_findings(result.findings)
                         for k, v in result.data.items():
                             self.ctx.set_data(k, v)

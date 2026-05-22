@@ -51,6 +51,12 @@ class WPPluginsModule(BazookaModule):
 
     async def run(self, ctx: ScanContext, session: BazookaSession) -> ModuleResult:
         result = ModuleResult()
+        # Short-circuit: authenticated REST inventory (--wp-auth) is authoritative.
+        if ctx.get_data("wp_auth_inventory_done"):
+            result.status = "skipped"
+            result.add_data("plugins_detected",
+                            [p.model_dump() for p in ctx.target.plugins])
+            return result
         base = ctx.target.url
         wp_content = ctx.target.wp_content_path
         plugins: dict[str, WPPlugin] = {}

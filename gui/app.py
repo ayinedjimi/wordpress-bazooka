@@ -98,6 +98,11 @@ async def start_scan(request: Request):
     rate_limit = float(form.get("rate_limit", 10))
     threads = int(form.get("threads", 10))
     use_tor = bool(form.get("use_tor"))
+    try:
+        max_scan_duration = int(form.get("max_scan_duration", 0) or 0)
+    except (TypeError, ValueError):
+        max_scan_duration = 0
+    wp_auth_str = str(form.get("wp_auth") or "").strip()
 
     if not url:
         return RedirectResponse("/", status_code=303)
@@ -128,7 +133,8 @@ async def start_scan(request: Request):
     # Launch scan in background. Store the Task ref so the GC cannot collect
     # it mid-execution (CPython will silently cancel orphan tasks).
     task = asyncio.create_task(
-        _run_scan(scan_id, url, profile, rate_limit, threads, use_tor)
+        _run_scan(scan_id, url, profile, rate_limit, threads, use_tor,
+                  max_scan_duration=max_scan_duration, wp_auth=wp_auth_str)
     )
     scans[scan_id]["_task"] = task
 
@@ -136,7 +142,8 @@ async def start_scan(request: Request):
 
 
 async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
-                    threads: int, use_tor: bool = False):
+                    threads: int, use_tor: bool = False,
+                    max_scan_duration: int = 0, wp_auth: str = ""):
     """Background scan task — mirrors console output to live log."""
     scan = scans[scan_id]
     log = scan["logs"]
@@ -190,6 +197,9 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
             threads=threads,
             proxy=proxy_url,
         )
+        if wp_auth and ":" in wp_auth:
+            engine.ctx.set_data("wp_auth", wp_auth)
+            L(f"[wp-auth] using application password for {wp_auth.split(':')[0]!r}")
         engine.discover_modules()
         # Allow the WebSocket loop to pull live sub-actions from the running engine.
         scan["_engine"] = engine
@@ -202,6 +212,16 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
                 active_phases.append(phase)
 
         total_phases = len(active_phases)
+
+        # Global scan timeout — track wall-clock budget and stop after.
+        # max_scan_duration <= 0 means unlimited.
+        scan_started_at = asyncio.get_event_loop().time()
+
+        def _budget_left() -> Optional[float]:
+            if max_scan_duration <= 0:
+                return None
+            elapsed = asyncio.get_event_loop().time() - scan_started_at
+            return max(0.0, max_scan_duration - elapsed)
 
         # Bootstrap WAF detection — tolerant to network errors
         scan["phase"] = "bootstrap"
@@ -243,6 +263,12 @@ async def _run_scan(scan_id: str, url: str, profile: str, rate_limit: float,
 
         # Run each phase
         for phase_idx, phase in enumerate(active_phases):
+            # Honor the global scan-duration budget.
+            budget = _budget_left()
+            if budget is not None and budget <= 0:
+                L(f"[TIMEOUT] Max scan duration ({max_scan_duration}s) reached — stopping at phase {phase}")
+                scan["status"] = "timeout"
+                break
             mods = engine._modules.get(phase, [])
             if not mods:
                 continue

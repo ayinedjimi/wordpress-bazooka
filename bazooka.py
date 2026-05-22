@@ -69,6 +69,10 @@ def scan(
     origin: Optional[str] = typer.Option(None, "--origin", help="Origin IP for CDN bypass"),
     output: str = typer.Option("./loot", "--output", "-o", help="Output directory"),
     threads: int = typer.Option(10, "--threads", "-t", help="Number of concurrent threads"),
+    max_scan_duration: int = typer.Option(0, "--max-scan-duration",
+                                           help="Global scan timeout in seconds (0 = no limit)"),
+    wp_auth: Optional[str] = typer.Option(None, "--wp-auth",
+                                           help="WP application password: 'username:xxxx-xxxx-xxxx'"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Show tests without executing"),
     verbose: int = typer.Option(1, "--verbose", "-v", help="Verbosity level (1-3)"),
 ) -> None:
@@ -134,9 +138,17 @@ def scan(
         origin=origin,
         threads=threads,
     )
+    if wp_auth:
+        # Forwarded to authenticated-inventory modules via ctx.data
+        engine.ctx.set_data("wp_auth", wp_auth)
+        console.print(f"  [magenta]wp-auth:[/magenta] using application password for {wp_auth.split(':')[0]!r}")
 
     try:
-        ctx = asyncio.run(engine.run())
+        if max_scan_duration > 0:
+            console.print(f"  [yellow]Max scan duration:[/yellow] {max_scan_duration}s")
+            ctx = asyncio.run(asyncio.wait_for(engine.run(), timeout=max_scan_duration))
+        else:
+            ctx = asyncio.run(engine.run())
 
         # Generate reports
         console.print("\n [bold]\\[REPORT][/bold] Generating reports...")
@@ -148,6 +160,13 @@ def scan(
             f"Reports: {len(generated)} files generated in {output}/{ctx.target.domain}/",
             border_style="green",
         ))
+    except asyncio.TimeoutError:
+        console.print(Panel(
+            f"[bold red]Scan timed out after {max_scan_duration}s.[/bold red]\n"
+            "Partial findings retained in the engine context were not saved (engine raised mid-flight).",
+            border_style="red",
+        ))
+        raise typer.Exit(124)  # 124 = standard unix `timeout` exit code
     finally:
         if _tor_proc is not None:
             _tor_proc.stop()

@@ -176,6 +176,18 @@ body { background: var(--bz-light); font-family: 'Segoe UI', system-ui, sans-ser
                     </div>
                 </div>
             </div>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <label class="form-label">Timeout global (s)</label>
+                    <input type="number" name="max_scan_duration" class="form-control" min="0" value="0" placeholder="0 = illimite">
+                    <small class="text-muted">0 = pas de timeout global</small>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">WP App Password (whitebox, optionnel)</label>
+                    <input type="text" name="wp_auth" class="form-control" placeholder="admin:XXXX XXXX XXXX XXXX XXXX XXXX">
+                    <small class="text-muted">Inventaire REST authentifie - court-circuite l'enumeration bruteforce</small>
+                </div>
+            </div>
         </form>
     </div>
 

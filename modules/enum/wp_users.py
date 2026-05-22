@@ -26,6 +26,10 @@ class WPUsersModule(BazookaModule):
 
     async def run(self, ctx: ScanContext, session: BazookaSession) -> ModuleResult:
         result = ModuleResult()
+        # Short-circuit: authenticated REST inventory (--wp-auth) is authoritative.
+        if ctx.get_data("wp_auth_inventory_done"):
+            result.status = "skipped"
+            return result
         base = ctx.target.url
         users: dict[str, WPUser] = {}  # key = username/slug
 
